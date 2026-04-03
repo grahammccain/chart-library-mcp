@@ -1,75 +1,82 @@
 # Chart Library MCP Server
 
-MCP server for [Chart Library](https://chartlibrary.io) — a visual chart pattern search engine. Find historically similar stock charts from 24M+ patterns across 15K+ symbols and 10 years of data. See what happened next.
+A compliance-safe way for AI agents to discuss stocks using real historical data.
 
-## What it does
-
-Given a stock ticker and date, Chart Library finds the 10 most similar historical chart patterns using ML embeddings (DINOv2-ViT-B/14) and pgvector similarity search. Returns forward returns (1/3/5/10 day), outcome distributions, and AI summaries.
-
-## Tools
-
-| Tool | Description |
-|------|-------------|
-| `analyze_pattern` | **Recommended** — complete analysis in one call: search + forward returns + AI summary |
-| `search_charts` | Find similar historical chart patterns for a ticker + date |
-| `search_batch` | Search multiple symbols at once (up to 20) |
-| `get_follow_through` | Compute 1/3/5/10-day forward returns from matches |
-| `get_pattern_summary` | AI-generated plain-English summary |
-| `get_discover_picks` | Today's most interesting patterns from the daily scanner |
-| `get_status` | Database stats: embeddings, symbols, date range |
+Instead of hallucinating predictions or refusing to answer, your agent can say: "The last 10 times a chart looked like NVDA, 7 went up over 5 days (avg +3.1%)." This is factual historical data from 24 million pattern embeddings across 10 years and 15,000+ stocks — not financial advice, not predictions, just what happened before.
 
 ## Install
 
-### Claude Desktop
-
-Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "chart-library": {
-      "command": "python",
-      "args": ["mcp_server.py"],
-      "cwd": "/path/to/chart-library-mcp"
-    }
-  }
-}
+```bash
+pip install chartlibrary-mcp
 ```
 
-### Claude Code (CLI)
+## Usage with Claude
 
 ```bash
-claude mcp add chart-library -- python mcp_server.py
+# Claude Code
+claude mcp add chart-library -- chartlibrary-mcp
+
+# Or run directly
+CHART_LIBRARY_API_KEY=cl_your_key chartlibrary-mcp
 ```
 
-## Configuration
+## Tools (19)
 
-Set `CHART_LIBRARY_API_KEY` for higher rate limits (optional — free tier works without a key):
+### Core Search
+| Tool | Description |
+|------|-------------|
+| `analyze_pattern` | Search + forward returns + AI summary in one call (recommended) |
+| `search_charts` | Find 10 most similar historical patterns |
+| `get_follow_through` | Forward returns (1/3/5/10-day) for matches |
+| `get_pattern_summary` | AI-generated plain-English summary |
+| `get_discover_picks` | Daily top patterns ranked by interest score |
+| `search_batch` | Multi-symbol parallel search (up to 20) |
+| `get_status` | Database stats and coverage |
 
+### Market Intelligence
+| Tool | Description |
+|------|-------------|
+| `detect_anomaly` | Check if a stock's pattern is unusual vs history |
+| `get_volume_profile` | Intraday volume breakdown vs historical average |
+| `get_sector_rotation` | Which sectors are leading/lagging |
+| `get_crowding` | Are too many stocks signaling the same direction? |
+| `get_earnings_reaction` | Historical earnings gap reactions |
+| `get_correlation_shift` | Stocks breaking from usual market correlation |
+| `run_scenario` | What happens to a stock when the market moves X%? |
+
+### Trading Intelligence
+| Tool | Description |
+|------|-------------|
+| `get_regime_win_rates` | Pattern win rates filtered by current market regime |
+| `get_pattern_degradation` | Are signals degrading vs historical accuracy? |
+| `get_exit_signal` | Pattern-based exit recommendations for open positions |
+| `get_risk_adjusted_picks` | Picks scored by Sharpe-like risk/reward ratio |
+
+### Utility
+| Tool | Description |
+|------|-------------|
+| `report_feedback` | Report errors or suggestions |
+
+## Example Conversation
+
+> **User:** What does NVDA's chart look like right now?
+>
+> **Claude (using Chart Library):** NVDA's current pattern matches 10 historical setups. The closest is AAPL from May 2016 (93% similarity). Of the 10 matches, 8 went up over 5 days with an average gain of +3.0%. The current market regime resembles the post-SVB period of early 2023, which historically resolved bullishly.
+
+## API Key
+
+Get a free API key (500 calls/day) at [chartlibrary.io/developers](https://chartlibrary.io/developers).
+
+Set it as an environment variable:
 ```bash
-export CHART_LIBRARY_API_KEY=cl_your_key_here
-```
-
-Get a free key at [chartlibrary.io/developers](https://chartlibrary.io/developers).
-
-## Example
-
-```
-User: "What does AAPL's chart from March 20 look like historically?"
-
-Agent uses analyze_pattern("AAPL 2026-03-20"):
-→ 10 matches found (JNJ, CVX, MSFT, TJX, RTX...)
-→ 5-day forward: avg +0.39%, 6 of 10 went up
-→ AI summary: "Based on 10 similar patterns, AAPL shows..."
+export CHART_LIBRARY_API_KEY=cl_your_key
 ```
 
 ## Links
 
-- [chartlibrary.io](https://chartlibrary.io) — Live app
-- [API docs](https://chartlibrary.io/developers)
-- [OpenAPI spec](https://chartlibrary.io/api/openapi.json)
-- [AI plugin manifest](https://chartlibrary.io/.well-known/ai-plugin.json)
+- Website: [chartlibrary.io](https://chartlibrary.io)
+- API Docs: [chartlibrary.io/api/docs](https://chartlibrary.io/api/docs)
+- Developer Portal: [chartlibrary.io/developers](https://chartlibrary.io/developers)
+- Regime Tracker: [chartlibrary.io/regime](https://chartlibrary.io/regime)
 
-## License
-
-MIT
+<!-- mcp-name: io.github.grahammccain/chart-library -->

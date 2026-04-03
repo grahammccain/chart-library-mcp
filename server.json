@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.grahammccain/chart-library",
+  "title": "Chart Library — Pattern Intelligence",
+  "description": "19-tool pattern intelligence API: search 24M historical charts, forward returns, regime analysis, anomaly detection, and trading signals.",
+  "repository": {
+    "url": "https://github.com/grahammccain/chart-library-mcp",
+    "source": "github"
+  },
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "chartlibrary-mcp",
+      "version": "1.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "description": "Chart Library API key (get free at chartlibrary.io/developers)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "CHART_LIBRARY_API_KEY"
+        }
+      ]
+    }
+  ]
+}

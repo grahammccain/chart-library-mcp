@@ -1,0 +1,12 @@
+# Build artifacts
+dist/
+*.egg-info/
+build/
+__pycache__/
+
+# Tokens and secrets
+.mcpregistry_*
+*.exe
+
+# Archives
+*.tar.gz

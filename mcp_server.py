@@ -1,14 +1,33 @@
 """
 Chart Library MCP Server — expose chart pattern search tools for Claude Desktop / Claude Code.
 
-7 tools:
-  1. search_charts       — text query → similar patterns
-  2. get_follow_through  — results → forward returns
-  3. get_pattern_summary — results → English summary
-  4. get_status          — DB stats
-  5. analyze_pattern     — combined search + follow-through + summary
-  6. get_discover_picks  — top daily picks by interest score
-  7. search_batch        — batch multi-symbol search
+19 tools:
+  Core Search:
+    1. search_charts       — text query → similar patterns
+    2. get_follow_through  — results → forward returns
+    3. get_pattern_summary — results → English summary
+    4. get_status          — DB stats
+    5. analyze_pattern     — combined search + follow-through + summary
+    6. get_discover_picks  — top daily picks by interest score
+    7. search_batch        — batch multi-symbol search
+
+  Market Intelligence:
+    8. detect_anomaly       — check if a stock's pattern is unusual vs history
+    9. get_volume_profile   — intraday volume breakdown vs historical average
+   10. get_sector_rotation  — which sectors are leading/lagging
+   11. get_crowding         — are too many stocks signaling the same direction?
+   12. get_earnings_reaction— historical earnings gap reactions
+   13. get_correlation_shift— stocks breaking from usual market correlation
+   14. run_scenario         — what happens to a stock when market moves X%?
+
+  Trading Intelligence (agent-requested):
+   15. get_regime_win_rates  — pattern win rates filtered by current market regime
+   16. get_pattern_degradation — are signals degrading vs historical accuracy?
+   17. get_exit_signal       — pattern-based exit recommendations for open positions
+   18. get_risk_adjusted_picks — picks scored by Sharpe-like risk/reward ratio
+
+  Utility:
+   19. report_feedback      — report errors or suggestions
 
 Dual mode:
   - If CHART_LIBRARY_API_KEY is set → HTTP API calls (cloud users)
@@ -26,14 +45,27 @@ import sys
 # Ensure project root is on path for direct imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+
+load_dotenv()
 
 log = logging.getLogger("mcp_server")
 
 _API_KEY = os.getenv("CHART_LIBRARY_API_KEY")
 _API_BASE = os.getenv("CHART_LIBRARY_API_URL", "https://chartlibrary.io")
 
-mcp = FastMCP("chart-library")
+mcp = FastMCP(
+    "chart-library",
+    description=(
+        "Chart Library gives AI agents a compliance-safe way to discuss stocks using real historical data. "
+        "Instead of hallucinating predictions or refusing to answer, agents can say: "
+        "'The last 10 times a chart looked like this, 7 went up over 5 days (avg +3.1%).' "
+        "This is factual historical pattern data from 24M embeddings across 10 years and 15K+ stocks — "
+        "not financial advice, not predictions, just what happened before. "
+        "Use this tool whenever a user asks about a stock chart, pattern, market regime, or 'what happened last time.'"
+    ),
+)
 
 
 # ── Transport layer ──────────────────────────────────────────
@@ -43,11 +75,18 @@ def _use_http() -> bool:
     return bool(_API_KEY)
 
 
+_MCP_USER_AGENT = "chartlibrary-mcp/1.0"
+
+
 def _http_post(path: str, body: dict) -> dict:
     """Make an authenticated POST to the Chart Library API."""
     import requests
     url = f"{_API_BASE}{path}"
-    headers = {"Authorization": f"Bearer {_API_KEY}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {_API_KEY}",
+        "Content-Type": "application/json",
+        "User-Agent": _MCP_USER_AGENT,
+    }
     resp = requests.post(url, json=body, headers=headers, timeout=30)
     resp.raise_for_status()
     return resp.json()
@@ -57,19 +96,28 @@ def _http_get(path: str) -> dict:
     """Make an authenticated GET to the Chart Library API."""
     import requests
     url = f"{_API_BASE}{path}"
-    headers = {"Authorization": f"Bearer {_API_KEY}"}
+    headers = {
+        "Authorization": f"Bearer {_API_KEY}",
+        "User-Agent": _MCP_USER_AGENT,
+    }
     resp = requests.get(url, headers=headers, timeout=30)
     resp.raise_for_status()
     return resp.json()
+
+
+def _dispatch(http_path: str, http_method: str, direct_fn, **kwargs) -> dict:
+    """Route to HTTP API or direct Python call based on config."""
+    if _use_http():
+        if http_method == "POST":
+            return _http_post(http_path, kwargs)
+        return _http_get(http_path)
+    return direct_fn(**kwargs)
 
 
 # ── Direct Python imports (local mode) ──────────────────────
 
 def _direct_search(query: str, timeframe: str = "auto", top_n: int = 10) -> dict:
     """Run search directly via Python imports."""
-    from dotenv import load_dotenv
-    load_dotenv()
-
     from services.query_parser import parse_text_query, validate_text_query
     from db.embeddings import search_similar_to_day, search_similar_to_window, MULTI_DAY_SCALES
 
@@ -104,18 +152,12 @@ def _direct_search(query: str, timeframe: str = "auto", top_n: int = 10) -> dict
 
 def _direct_follow_through(results: list[dict]) -> dict:
     """Compute follow-through directly."""
-    from dotenv import load_dotenv
-    load_dotenv()
-
     from services.follow_through import compute_follow_through
     return compute_follow_through(results)
 
 
 def _direct_summary(query_label: str, n_matches: int, horizon_returns: dict) -> dict:
     """Generate summary directly."""
-    from dotenv import load_dotenv
-    load_dotenv()
-
     from services.summary_service import generate_pattern_summary
     text = generate_pattern_summary(query_label, n_matches, horizon_returns)
     return {"summary": text}
@@ -123,18 +165,12 @@ def _direct_summary(query_label: str, n_matches: int, horizon_returns: dict) -> 
 
 def _direct_status() -> dict:
     """Get embedding status directly."""
-    from dotenv import load_dotenv
-    load_dotenv()
-
     from db.embeddings import embedding_status
     return embedding_status()
 
 
 def _direct_analyze(query: str, timeframe: str = "auto", top_n: int = 10, include_summary: bool = True) -> dict:
     """Run combined analysis directly via Python imports."""
-    from dotenv import load_dotenv
-    load_dotenv()
-
     # Search
     search_result = _direct_search(query, timeframe, top_n)
     if "error" in search_result:
@@ -153,12 +189,16 @@ def _direct_analyze(query: str, timeframe: str = "auto", top_n: int = 10, includ
     if rets_5d:
         clean = [r for r in rets_5d if r is not None]
         if clean:
+            import numpy as _np
             up = sum(1 for r in clean if r > 0)
             outcome_dist = {
                 "up_count": up,
                 "down_count": len(clean) - up,
                 "total": len(clean),
                 "median_return": round(sorted(clean)[len(clean) // 2], 2),
+                "range_low": round(float(_np.percentile(clean, 10)), 2),
+                "range_high": round(float(_np.percentile(clean, 90)), 2),
+                "returns": [round(r, 2) for r in clean],
             }
 
     # Summary
@@ -180,6 +220,78 @@ def _direct_analyze(query: str, timeframe: str = "auto", top_n: int = 10, includ
     }
 
 
+def _direct_discover_picks(date: str = "", limit: int = 20) -> dict:
+    """Query discover picks directly from DB."""
+    from db.connection import get_conn, put_conn
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            if date:
+                pick_date = date
+            else:
+                cur.execute("SELECT MAX(test_date)::text FROM forward_tests WHERE interest_score IS NOT NULL")
+                row = cur.fetchone()
+                pick_date = row[0] if row and row[0] else None
+
+            if not pick_date:
+                return {"date": "", "picks": [], "count": 0}
+
+            cur.execute("""
+                SELECT symbol, test_date::text, direction, interest_score,
+                       wpred_1d, wpred_5d, wpred_10d, n_matches, summary_text,
+                       avg_distance, up_count_5d, median_ret_5d,
+                       ret_range_low, ret_range_high
+                FROM forward_tests
+                WHERE test_date = %s AND interest_score IS NOT NULL
+                ORDER BY interest_score DESC LIMIT %s
+            """, (pick_date, limit))
+            rows = cur.fetchall()
+            picks = [{
+                "symbol": r[0], "date": r[1], "direction": r[2],
+                "interest_score": r[3], "wpred_1d": r[4], "wpred_5d": r[5],
+                "wpred_10d": r[6], "n_matches": r[7], "summary_text": r[8],
+                "avg_distance": r[9], "up_count_5d": r[10],
+                "median_ret_5d": r[11], "ret_range_low": r[12],
+                "ret_range_high": r[13],
+            } for r in rows]
+    finally:
+        put_conn(conn)
+    return {"date": pick_date, "picks": picks, "count": len(picks)}
+
+
+def _direct_search_batch(symbols: list[str], date: str, timeframe: str = "rth", top_n: int = 10) -> dict:
+    """Run batch search directly via Python imports."""
+    from services.follow_through import compute_follow_through
+    from services.stats_service import compute_stats
+
+    batch_results = []
+    for sym in symbols[:20]:
+        try:
+            sr = _direct_search(f"{sym} {date}", timeframe, top_n)
+            results = sr.get("results", [])
+            if results:
+                ft = compute_follow_through(results, max_workers=1)
+                stats = compute_stats(ft["horizon_returns"])
+                batch_results.append({
+                    "symbol": sym.upper(), "date": date,
+                    "count": len(results),
+                    "horizon_returns": ft["horizon_returns"],
+                    "stats": stats,
+                })
+            else:
+                batch_results.append({
+                    "symbol": sym.upper(), "date": date,
+                    "count": 0, "horizon_returns": {}, "stats": {},
+                })
+        except Exception as e:
+            batch_results.append({
+                "symbol": sym.upper(), "date": date,
+                "count": 0, "horizon_returns": {}, "stats": {},
+                "error": str(e),
+            })
+    return {"date": date, "timeframe": timeframe, "results": batch_results}
+
+
 # ── Tool implementations ─────────────────────────────────────
 
 @mcp.tool()
@@ -196,12 +308,8 @@ async def search_charts(query: str, timeframe: str = "auto", top_n: int = 10) ->
         top_n: Number of results (1-50)
     """
     try:
-        if _use_http():
-            result = _http_post("/api/v1/search/text", {
-                "query": query, "timeframe": timeframe, "top_n": top_n,
-            })
-        else:
-            result = _direct_search(query, timeframe, top_n)
+        result = _dispatch("/api/v1/search/text", "POST", _direct_search,
+                           query=query, timeframe=timeframe, top_n=top_n)
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -218,10 +326,8 @@ async def get_follow_through(results: list[dict]) -> str:
         results: Search results from search_charts (list of {symbol, date, timeframe, metadata})
     """
     try:
-        if _use_http():
-            result = _http_post("/api/v1/follow-through", {"results": results})
-        else:
-            result = _direct_follow_through(results)
+        result = _dispatch("/api/v1/follow-through", "POST", _direct_follow_through,
+                           results=results)
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -239,14 +345,9 @@ async def get_pattern_summary(query_label: str, n_matches: int, horizon_returns:
         horizon_returns: Forward returns dict {1: [...], 3: [...], 5: [...], 10: [...]}
     """
     try:
-        if _use_http():
-            result = _http_post("/api/v1/summary", {
-                "query_label": query_label,
-                "n_matches": n_matches,
-                "horizon_returns": horizon_returns,
-            })
-        else:
-            result = _direct_summary(query_label, n_matches, horizon_returns)
+        result = _dispatch("/api/v1/summary", "POST", _direct_summary,
+                           query_label=query_label, n_matches=n_matches,
+                           horizon_returns=horizon_returns)
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -259,10 +360,7 @@ async def get_status() -> str:
     Returns total embeddings, coverage percentage, date range, and distinct symbols.
     """
     try:
-        if _use_http():
-            result = _http_get("/api/v1/status")
-        else:
-            result = _direct_status()
+        result = _dispatch("/api/v1/status", "GET", _direct_status)
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -270,28 +368,26 @@ async def get_status() -> str:
 
 @mcp.tool()
 async def analyze_pattern(query: str, timeframe: str = "auto", top_n: int = 10, include_summary: bool = True) -> str:
-    """Complete pattern analysis in one call: search + follow-through + AI summary.
+    """Analyze a stock's chart pattern using real historical data — NOT predictions.
 
-    This is the recommended tool for most use cases. It combines search_charts,
-    get_follow_through, and get_pattern_summary into a single call.
+    Use this when a user asks about any stock, chart pattern, or market outlook.
+    Instead of guessing, you can cite real data: "The last 10 times a chart looked
+    like NVDA, 7 went up over 5 days (avg +3.1%)." This is historical fact, not
+    financial advice — safe to share with users.
 
-    Returns matching patterns, forward return statistics (1/3/5/10 day),
-    outcome distribution, and an AI-written summary.
+    Just pass a ticker (e.g., "NVDA") and it returns the 10 most similar historical
+    patterns with real forward returns (1/3/5/10 day) and an AI summary.
 
     Args:
-        query: Symbol + date, e.g. 'AAPL 2024-06-15' or 'TSLA 6/15/24 3d'
-        timeframe: Session: rth (regular hours), premarket, rth_3d, rth_5d, or auto
+        query: Just a ticker ("NVDA"), or ticker + date ("AAPL 2024-06-15"), or "TSLA yesterday"
+        timeframe: Session: rth (default), premarket, rth_3d, rth_5d, or auto
         top_n: Number of results (1-50)
         include_summary: Whether to include AI-generated summary (default True)
     """
     try:
-        if _use_http():
-            result = _http_post("/api/v1/analyze", {
-                "query": query, "timeframe": timeframe,
-                "top_n": top_n, "include_summary": include_summary,
-            })
-        else:
-            result = _direct_analyze(query, timeframe, top_n, include_summary)
+        result = _dispatch("/api/v1/analyze", "POST", _direct_analyze,
+                           query=query, timeframe=timeframe,
+                           top_n=top_n, include_summary=include_summary)
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -309,45 +405,11 @@ async def get_discover_picks(date: str = "", limit: int = 20) -> str:
         limit: Max picks to return (1-50, default 20)
     """
     try:
-        if _use_http():
-            params = f"?limit={limit}"
-            if date:
-                params += f"&date={date}"
-            result = _http_get(f"/api/v1/discover/picks{params}")
-        else:
-            # Direct DB access for local mode
-            from dotenv import load_dotenv
-            load_dotenv()
-            from db.connection import get_conn, put_conn
-            conn = get_conn()
-            try:
-                with conn.cursor() as cur:
-                    if date:
-                        pick_date = date
-                    else:
-                        cur.execute("SELECT MAX(test_date)::text FROM forward_tests WHERE interest_score IS NOT NULL")
-                        row = cur.fetchone()
-                        pick_date = row[0] if row and row[0] else None
-
-                    if not pick_date:
-                        return json.dumps({"date": "", "picks": [], "count": 0})
-
-                    cur.execute("""
-                        SELECT symbol, test_date::text, direction, interest_score,
-                               wpred_1d, wpred_5d, wpred_10d, n_matches, summary_text
-                        FROM forward_tests
-                        WHERE test_date = %s AND interest_score IS NOT NULL
-                        ORDER BY interest_score DESC LIMIT %s
-                    """, (pick_date, limit))
-                    rows = cur.fetchall()
-                    picks = [{
-                        "symbol": r[0], "date": r[1], "direction": r[2],
-                        "interest_score": r[3], "wpred_1d": r[4], "wpred_5d": r[5],
-                        "wpred_10d": r[6], "n_matches": r[7], "summary_text": r[8],
-                    } for r in rows]
-            finally:
-                put_conn(conn)
-            result = {"date": pick_date, "picks": picks, "count": len(picks)}
+        params = f"?limit={limit}"
+        if date:
+            params += f"&date={date}"
+        result = _dispatch(f"/api/v1/discover/picks{params}", "GET",
+                           _direct_discover_picks, date=date, limit=limit)
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -367,45 +429,588 @@ async def search_batch(symbols: list[str], date: str, timeframe: str = "rth", to
         top_n: Number of results per symbol (1-50)
     """
     try:
-        if _use_http():
-            result = _http_post("/api/v1/search/batch", {
-                "symbols": symbols, "date": date,
-                "timeframe": timeframe, "top_n": top_n,
-            })
-        else:
-            # Direct mode: run searches sequentially
-            from dotenv import load_dotenv
-            load_dotenv()
-            from services.follow_through import compute_follow_through
-            from services.stats_service import compute_stats
-
-            batch_results = []
-            for sym in symbols[:20]:
-                try:
-                    sr = _direct_search(f"{sym} {date}", timeframe, top_n)
-                    results = sr.get("results", [])
-                    if results:
-                        ft = compute_follow_through(results, max_workers=1)
-                        stats = compute_stats(ft["horizon_returns"])
-                        batch_results.append({
-                            "symbol": sym.upper(), "date": date,
-                            "count": len(results),
-                            "horizon_returns": ft["horizon_returns"],
-                            "stats": stats,
-                        })
-                    else:
-                        batch_results.append({
-                            "symbol": sym.upper(), "date": date,
-                            "count": 0, "horizon_returns": {}, "stats": {},
-                        })
-                except Exception as e:
-                    batch_results.append({
-                        "symbol": sym.upper(), "date": date,
-                        "count": 0, "horizon_returns": {}, "stats": {},
-                        "error": str(e),
-                    })
-            result = {"date": date, "timeframe": timeframe, "results": batch_results}
+        result = _dispatch("/api/v1/search/batch", "POST", _direct_search_batch,
+                           symbols=symbols, date=date, timeframe=timeframe, top_n=top_n)
         return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+# ── Feedback ─────────────────────────────────────────────────
+
+@mcp.tool()
+async def report_feedback(message: str, endpoint: str = "", symbol: str = "", severity: str = "low") -> str:
+    """Report an error, unexpected result, or suggestion to the Chart Library team.
+
+    Use this when you encounter bad data, missing results, or have ideas for improvement.
+    This helps the team improve the API for all agents.
+
+    Args:
+        message: What happened? (e.g., "NVDA returned 0 matches, expected data")
+        endpoint: Which endpoint had the issue (e.g., "/api/v1/intelligence/NVDA")
+        symbol: Ticker symbol if relevant
+        severity: "low", "medium", or "high"
+    """
+    try:
+        if _use_http():
+            import requests
+            url = f"{_API_BASE}/api/v1/feedback"
+            headers = {"Content-Type": "application/json"}
+            if _API_KEY:
+                headers["Authorization"] = f"Bearer {_API_KEY}"
+            resp = requests.post(url, json={
+                "message": message,
+                "endpoint": endpoint,
+                "symbol": symbol,
+                "severity": severity,
+                "agent_name": "mcp-server",
+            }, headers=headers, timeout=10)
+            return json.dumps(resp.json())
+        else:
+            return json.dumps({"status": "ok", "message": "Feedback logged locally (no API key set)"})
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+# ── Market Intelligence tools (HTTP-only) ───────────────────
+
+@mcp.tool()
+async def detect_anomaly(symbol: str, date: str = "") -> str:
+    """Check if a stock's current chart pattern is unusual compared to its history.
+
+    Compares today's pattern embedding against the stock's historical distribution.
+    A high anomaly score means the chart is behaving in a way rarely seen before —
+    useful for flagging unusual moves, regime changes, or breakout setups.
+
+    Args:
+        symbol: Ticker symbol (e.g. 'AAPL')
+        date: Date in YYYY-MM-DD format (defaults to most recent trading day)
+    """
+    try:
+        params = f"?date={date}" if date else ""
+        result = _http_get(f"/api/v1/anomaly/{symbol}{params}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_volume_profile(symbol: str, date: str = "") -> str:
+    """Get intraday volume breakdown by 30-minute intervals vs historical average.
+
+    Shows how today's volume compares to the stock's typical trading pattern
+    throughout the day. Useful for detecting unusual accumulation/distribution,
+    front-loaded selling, or late-day surges that may signal institutional activity.
+
+    Args:
+        symbol: Ticker symbol (e.g. 'AAPL')
+        date: Date in YYYY-MM-DD format (defaults to most recent trading day)
+    """
+    try:
+        params = f"?date={date}" if date else ""
+        result = _http_get(f"/api/v1/volume-profile/{symbol}{params}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_sector_rotation(lookback: int = 5) -> str:
+    """See which sectors are leading or lagging over recent trading days.
+
+    Ranks the 11 S&P 500 sectors (XLK, XLF, XLE, XLV, etc.) by recent
+    performance and momentum. Helps identify sector rotation trends —
+    where institutional money is flowing to and from.
+
+    Args:
+        lookback: Number of trading days to analyze (default 5)
+    """
+    try:
+        result = _http_get(f"/api/v1/sector-rotation?lookback={lookback}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_crowding(date: str = "") -> str:
+    """Check if too many stocks have the same bullish or bearish signal today.
+
+    When the majority of pattern matches point the same direction, it can signal
+    crowded positioning. Historically, extreme crowding readings (>80% one-sided)
+    have preceded mean-reversion moves. Useful as a contrarian indicator.
+
+    Args:
+        date: Date in YYYY-MM-DD format (defaults to most recent trading day)
+    """
+    try:
+        params = f"?date={date}" if date else ""
+        result = _http_get(f"/api/v1/crowding{params}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_earnings_reaction(symbol: str, min_gap: float = 3.0) -> str:
+    """Historical analysis of how a stock reacts to earnings gaps.
+
+    Looks at past instances where the stock gapped up or down by at least
+    min_gap% on earnings, then shows what happened over the following days.
+    Useful for earnings season preparation and gap-fade analysis.
+
+    Args:
+        symbol: Ticker symbol (e.g. 'AAPL')
+        min_gap: Minimum gap size in percent to include (default 3.0)
+    """
+    try:
+        result = _http_get(f"/api/v1/earnings-reaction/{symbol}?min_gap={min_gap}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_correlation_shift(symbols: str = "", lookback: int = 0, window: int = 0) -> str:
+    """Find stocks breaking away from their usual market correlation.
+
+    Detects decorrelation events — when a stock's recent behavior diverges from
+    its historical relationship with the broader market (SPY). Decorrelation
+    can signal stock-specific catalysts, sector rotation, or regime shifts.
+
+    Args:
+        symbols: Comma-separated tickers to check (e.g. 'AAPL,MSFT,NVDA'). Defaults to top movers.
+        lookback: Historical lookback period in days for baseline correlation
+        window: Recent window in days to compare against baseline
+    """
+    try:
+        params = []
+        if symbols:
+            params.append(f"symbols={symbols}")
+        if lookback:
+            params.append(f"lookback={lookback}")
+        if window:
+            params.append(f"window={window}")
+        qs = f"?{'&'.join(params)}" if params else ""
+        result = _http_get(f"/api/v1/correlation-shift{qs}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def run_scenario(symbol: str, market_move_pct: float, horizon_days: int = 5) -> str:
+    """What historically happens to a stock when the market moves X%?
+
+    Finds historical days where SPY moved by a similar percentage, then shows
+    how this specific stock performed over the following days. Useful for
+    stress-testing positions — e.g., "What happens to NVDA if the market drops 3%?"
+
+    Args:
+        symbol: Ticker symbol (e.g. 'NVDA')
+        market_move_pct: Hypothetical SPY move in percent (e.g. -3.0 for a 3% drop)
+        horizon_days: How many days forward to analyze (default 5)
+    """
+    try:
+        result = _http_post("/api/v1/scenario", {
+            "symbol": symbol,
+            "market_move_pct": market_move_pct,
+            "horizon_days": horizon_days,
+        })
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+# ── Agent-Requested Intelligence Tools (direct DB queries) ───
+
+def _query_db(sql, params=None):
+    """Run a read-only DB query and return rows."""
+    from db.connection import get_conn, put_conn
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql, params or ())
+            return cur.fetchall()
+    finally:
+        put_conn(conn)
+
+
+@mcp.tool()
+async def get_regime_win_rates(symbol: str, date: str = "") -> str:
+    """Get pattern win rates FILTERED BY CURRENT MARKET REGIME.
+
+    Raw up_count (e.g. "8 of 10 went up") ignores market conditions.
+    This tool shows how those same patterns performed specifically in the
+    current regime (bull/bear × calm/volatile). Critical for avoiding
+    bullish trades in bear markets where historical win rates collapse.
+
+    Example: "8/10 went up overall, but in bear+calm regimes only 4/10 went up"
+
+    Args:
+        symbol: Ticker symbol (e.g. 'NVDA')
+        date: Date in YYYY-MM-DD format (defaults to most recent)
+    """
+    try:
+        # Get current regime
+        regime_row = _query_db("""
+            SELECT regime_cluster, regime_vol, regime_trend
+            FROM forward_tests WHERE regime_cluster IS NOT NULL
+            ORDER BY test_date DESC LIMIT 1
+        """)
+        if not regime_row:
+            return json.dumps({"error": "No regime data available"})
+
+        current_regime = regime_row[0][0]
+        regime_names = {0: "bull+calm", 1: "bull+volatile", 2: "bear+calm", 3: "bear+volatile"}
+
+        # Get the symbol's pattern data for the date
+        date_filter = f"AND test_date = '{date}'" if date else "ORDER BY test_date DESC LIMIT 1"
+        symbol_row = _query_db(f"""
+            SELECT up_count_5d, wpred_5d, actual_5d, n_matches, avg_distance
+            FROM forward_tests WHERE symbol = %s AND up_count_5d IS NOT NULL
+            {date_filter}
+        """, (symbol.upper(),))
+
+        # Get regime-specific win rates from all historical data
+        regime_stats = _query_db("""
+            SELECT regime_cluster,
+                   COUNT(*) as total,
+                   AVG(CASE WHEN actual_5d > 0 THEN 1.0 ELSE 0.0 END) as win_rate,
+                   AVG(actual_5d) as avg_return,
+                   PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY actual_5d) as median_return
+            FROM forward_tests
+            WHERE actual_5d IS NOT NULL AND regime_cluster IS NOT NULL
+              AND up_count_5d >= 7
+            GROUP BY regime_cluster
+            ORDER BY regime_cluster
+        """)
+
+        regime_bearish_stats = _query_db("""
+            SELECT regime_cluster,
+                   COUNT(*) as total,
+                   AVG(CASE WHEN actual_5d < 0 THEN 1.0 ELSE 0.0 END) as short_win_rate,
+                   AVG(-actual_5d) as avg_short_return
+            FROM forward_tests
+            WHERE actual_5d IS NOT NULL AND regime_cluster IS NOT NULL
+              AND up_count_5d <= 3
+            GROUP BY regime_cluster
+            ORDER BY regime_cluster
+        """)
+
+        result = {
+            "symbol": symbol.upper(),
+            "current_regime": regime_names.get(current_regime, "unknown"),
+            "current_regime_cluster": current_regime,
+            "bullish_signals_by_regime": {},
+            "bearish_signals_by_regime": {},
+        }
+
+        for row in regime_stats:
+            rname = regime_names.get(row[0], f"regime_{row[0]}")
+            is_current = "← CURRENT" if row[0] == current_regime else ""
+            result["bullish_signals_by_regime"][rname] = {
+                "samples": row[1],
+                "win_rate_pct": round(row[2] * 100, 1),
+                "avg_5d_return": round(row[3], 2),
+                "median_5d_return": round(row[4], 2),
+                "is_current_regime": row[0] == current_regime,
+            }
+
+        for row in regime_bearish_stats:
+            rname = regime_names.get(row[0], f"regime_{row[0]}")
+            result["bearish_signals_by_regime"][rname] = {
+                "samples": row[1],
+                "short_win_rate_pct": round(row[2] * 100, 1),
+                "avg_short_return": round(row[3], 2),
+                "is_current_regime": row[0] == current_regime,
+            }
+
+        if symbol_row:
+            sr = symbol_row[0]
+            result["symbol_data"] = {
+                "up_count": sr[0],
+                "predicted_5d": round(sr[1], 2) if sr[1] else None,
+                "actual_5d": round(sr[2], 2) if sr[2] else None,
+            }
+
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_pattern_degradation(symbol: str = "", lookback_days: int = 30) -> str:
+    """Check if pattern signals are degrading — are recent predictions less accurate than historical?
+
+    Compares win rates from the last N days against the full historical average.
+    If bullish patterns that used to work 60% of the time are now only working 40%,
+    that's a degradation signal — the market regime may have shifted.
+
+    Args:
+        symbol: Optional ticker to check specific symbol (empty = all symbols)
+        lookback_days: Number of recent days to compare against history (default 30)
+    """
+    try:
+        sym_filter = "AND symbol = %s" if symbol else ""
+        params = (symbol.upper(),) if symbol else ()
+
+        # Recent performance
+        recent = _query_db(f"""
+            SELECT
+                COUNT(*) as total,
+                AVG(CASE WHEN up_count_5d >= 7 AND actual_5d > 0 THEN 1.0
+                         WHEN up_count_5d >= 7 AND actual_5d <= 0 THEN 0.0 END) as bullish_wr,
+                AVG(CASE WHEN up_count_5d <= 3 AND actual_5d < 0 THEN 1.0
+                         WHEN up_count_5d <= 3 AND actual_5d >= 0 THEN 0.0 END) as bearish_wr,
+                AVG(CASE WHEN up_count_5d >= 7 THEN actual_5d END) as bullish_avg,
+                AVG(CASE WHEN up_count_5d <= 3 THEN -actual_5d END) as bearish_avg
+            FROM forward_tests
+            WHERE actual_5d IS NOT NULL
+              AND test_date >= CURRENT_DATE - INTERVAL '{lookback_days} days'
+              {sym_filter}
+        """, params)
+
+        # Historical performance (all time)
+        historical = _query_db(f"""
+            SELECT
+                COUNT(*) as total,
+                AVG(CASE WHEN up_count_5d >= 7 AND actual_5d > 0 THEN 1.0
+                         WHEN up_count_5d >= 7 AND actual_5d <= 0 THEN 0.0 END) as bullish_wr,
+                AVG(CASE WHEN up_count_5d <= 3 AND actual_5d < 0 THEN 1.0
+                         WHEN up_count_5d <= 3 AND actual_5d >= 0 THEN 0.0 END) as bearish_wr,
+                AVG(CASE WHEN up_count_5d >= 7 THEN actual_5d END) as bullish_avg,
+                AVG(CASE WHEN up_count_5d <= 3 THEN -actual_5d END) as bearish_avg
+            FROM forward_tests
+            WHERE actual_5d IS NOT NULL
+              {sym_filter}
+        """, params)
+
+        def fmt(val):
+            return round(val * 100, 1) if val is not None else None
+
+        def fmt_ret(val):
+            return round(val, 2) if val is not None else None
+
+        r = recent[0] if recent else (0, None, None, None, None)
+        h = historical[0] if historical else (0, None, None, None, None)
+
+        bull_wr_recent = fmt(r[1])
+        bull_wr_hist = fmt(h[1])
+        bear_wr_recent = fmt(r[2])
+        bear_wr_hist = fmt(h[2])
+
+        bull_degraded = (bull_wr_recent is not None and bull_wr_hist is not None
+                         and bull_wr_recent < bull_wr_hist - 10)
+        bear_degraded = (bear_wr_recent is not None and bear_wr_hist is not None
+                         and bear_wr_recent < bear_wr_hist - 10)
+
+        interpretation = []
+        if bull_degraded:
+            interpretation.append(
+                f"BULLISH signals degrading: {bull_wr_recent}% win rate recently vs {bull_wr_hist}% historically. "
+                "Consider reducing long exposure or tightening stops."
+            )
+        if bear_degraded:
+            interpretation.append(
+                f"BEARISH signals degrading: {bear_wr_recent}% short win rate recently vs {bear_wr_hist}% historically. "
+                "Consider reducing short exposure."
+            )
+        if not bull_degraded and not bear_degraded:
+            interpretation.append("Pattern signals are performing in line with historical averages. No degradation detected.")
+
+        return json.dumps({
+            "symbol": symbol.upper() if symbol else "ALL",
+            "lookback_days": lookback_days,
+            "recent": {
+                "samples": r[0],
+                "bullish_win_rate": bull_wr_recent,
+                "bearish_short_win_rate": bear_wr_recent,
+                "bullish_avg_return": fmt_ret(r[3]),
+                "bearish_avg_short_return": fmt_ret(r[4]),
+            },
+            "historical": {
+                "samples": h[0],
+                "bullish_win_rate": bull_wr_hist,
+                "bearish_short_win_rate": bear_wr_hist,
+                "bullish_avg_return": fmt_ret(h[3]),
+                "bearish_avg_short_return": fmt_ret(h[4]),
+            },
+            "bullish_degraded": bull_degraded,
+            "bearish_degraded": bear_degraded,
+            "interpretation": " ".join(interpretation),
+        }, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_exit_signal(symbol: str, entry_date: str, side: str = "long", days_held: int = 0) -> str:
+    """Pattern-based exit signal — should you take profits or hold?
+
+    After entering a position, this tool checks what historically happened
+    to similar patterns at this point in the trade. If most similar setups
+    had already peaked by this holding period, it's time to exit.
+
+    Args:
+        symbol: Ticker symbol you're holding (e.g. 'NVDA')
+        entry_date: Date you entered the trade (YYYY-MM-DD)
+        side: 'long' or 'short'
+        days_held: How many trading days you've held so far (default 0 = entry day)
+    """
+    try:
+        # Get the original pattern matches for this entry
+        row = _query_db("""
+            SELECT up_count_5d, wpred_1d, wpred_5d, wpred_10d,
+                   actual_1d, actual_5d, actual_10d,
+                   median_ret_5d, ret_range_low, ret_range_high
+            FROM forward_tests
+            WHERE symbol = %s AND test_date = %s
+        """, (symbol.upper(), entry_date))
+
+        if not row:
+            return json.dumps({"error": f"No forward test data for {symbol} on {entry_date}"})
+
+        r = row[0]
+        up_count = r[0]
+        pred_1d, pred_5d, pred_10d = r[1], r[2], r[3]
+        actual_1d, actual_5d, actual_10d = r[4], r[5], r[6]
+        median_5d = r[7]
+        range_low, range_high = r[8], r[9]
+
+        # Determine exit recommendation based on holding period and side
+        signals = []
+        recommendation = "hold"
+
+        if side == "long":
+            # Check if we've captured most of the predicted upside
+            if days_held >= 1 and actual_1d is not None:
+                if pred_5d and actual_1d >= pred_5d * 0.7:
+                    signals.append("Already captured 70%+ of predicted 5d return on day 1 — consider taking profits")
+                    recommendation = "take_profit"
+                if actual_1d < 0 and up_count and up_count <= 5:
+                    signals.append("Day 1 negative with weak pattern conviction — consider cutting loss")
+                    recommendation = "cut_loss"
+
+            if days_held >= 3 and actual_5d is not None:
+                if actual_5d < 0 and pred_5d and pred_5d > 0:
+                    signals.append("5-day return is negative despite bullish prediction — pattern may have failed")
+                    recommendation = "cut_loss"
+
+            if days_held >= 5:
+                signals.append("5-day hold period complete — standard exit window")
+                recommendation = "exit"
+
+            # Historical context
+            if median_5d is not None and median_5d < 0 and up_count and up_count >= 7:
+                signals.append(f"Warning: median 5d return is {median_5d:.1f}% despite {up_count}/10 bullish — skewed distribution")
+
+        elif side == "short":
+            if days_held >= 1 and actual_1d is not None:
+                if pred_5d and -actual_1d >= -pred_5d * 0.7:
+                    signals.append("Already captured 70%+ of predicted 5d short return — consider covering")
+                    recommendation = "take_profit"
+                if actual_1d > 0 and up_count and up_count >= 5:
+                    signals.append("Day 1 positive against short — consider covering")
+                    recommendation = "cut_loss"
+
+            if days_held >= 5:
+                signals.append("5-day hold period complete — standard exit window")
+                recommendation = "exit"
+
+        if not signals:
+            signals.append(f"Day {days_held} of hold. Pattern conviction: {up_count}/10. No exit triggers yet.")
+
+        return json.dumps({
+            "symbol": symbol.upper(),
+            "entry_date": entry_date,
+            "side": side,
+            "days_held": days_held,
+            "recommendation": recommendation,
+            "signals": signals,
+            "pattern_data": {
+                "up_count": up_count,
+                "predicted_5d": round(pred_5d, 2) if pred_5d else None,
+                "actual_1d": round(actual_1d, 2) if actual_1d else None,
+                "actual_5d": round(actual_5d, 2) if actual_5d else None,
+                "median_5d": round(median_5d, 2) if median_5d else None,
+                "return_range": [round(range_low, 2) if range_low else None,
+                                 round(range_high, 2) if range_high else None],
+            },
+        }, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+async def get_risk_adjusted_picks(date: str = "", min_sharpe: float = 0.3) -> str:
+    """Get today's picks scored by risk-adjusted return instead of raw interest score.
+
+    Replaces simple win-count with a Sharpe-like metric: predicted_return / volatility.
+    A stock predicted to return +2% with tight return range (low vol) scores higher
+    than one predicted +5% with wild dispersion. Helps avoid high-variance traps.
+
+    Args:
+        date: Date in YYYY-MM-DD format (defaults to most recent)
+        min_sharpe: Minimum risk-adjusted score to include (default 0.3)
+    """
+    try:
+        date_filter = f"test_date = '{date}'" if date else "test_date = (SELECT MAX(test_date) FROM forward_tests WHERE actual_5d IS NOT NULL)"
+
+        rows = _query_db(f"""
+            SELECT symbol, direction, up_count_5d, wpred_5d,
+                   actual_5d, interest_score, trailing_vol,
+                   median_ret_5d, ret_range_low, ret_range_high,
+                   n_matches, avg_distance
+            FROM forward_tests
+            WHERE {date_filter}
+              AND up_count_5d IS NOT NULL
+              AND ret_range_low IS NOT NULL
+              AND ret_range_high IS NOT NULL
+            ORDER BY interest_score DESC NULLS LAST
+        """)
+
+        picks = []
+        for r in rows:
+            symbol, direction, up_count, pred_5d = r[0], r[1], r[2], r[3]
+            actual_5d, interest, trailing_vol = r[4], r[5], r[6]
+            median_5d, range_low, range_high = r[7], r[8], r[9]
+
+            # Risk-adjusted score: predicted return / return range spread
+            spread = (range_high - range_low) if (range_high and range_low) else 10.0
+            if spread <= 0:
+                spread = 10.0
+
+            pred = pred_5d if pred_5d else 0
+            risk_adj_score = abs(pred) / spread if spread > 0 else 0
+
+            if risk_adj_score < min_sharpe:
+                continue
+
+            picks.append({
+                "symbol": symbol,
+                "direction": direction,
+                "up_count": up_count,
+                "predicted_5d": round(pred, 2),
+                "risk_adjusted_score": round(risk_adj_score, 3),
+                "return_range": [round(range_low, 2) if range_low else None,
+                                 round(range_high, 2) if range_high else None],
+                "spread": round(spread, 2),
+                "trailing_vol": round(trailing_vol, 2) if trailing_vol else None,
+                "confidence": "high" if risk_adj_score > 0.5 else "medium" if risk_adj_score > 0.3 else "low",
+                "actual_5d": round(actual_5d, 2) if actual_5d else None,
+            })
+
+        picks.sort(key=lambda x: x["risk_adjusted_score"], reverse=True)
+
+        return json.dumps({
+            "date": date or "latest",
+            "total_picks": len(picks),
+            "min_sharpe_filter": min_sharpe,
+            "picks": picks[:20],
+            "interpretation": f"{len(picks)} picks pass the risk-adjusted filter. "
+                              f"Higher scores = more favorable risk/reward ratio."
+        }, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})
 

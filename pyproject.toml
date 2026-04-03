@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chartlibrary-mcp"
+version = "1.1.0"
+description = "Chart Library MCP Server — 19 tools for chart pattern intelligence, regime analysis, and trading signals for AI agents"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "Chart Library", email = "graham@chartlibrary.io"},
+]
+keywords = ["mcp", "chart patterns", "stock analysis", "AI agent", "trading"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "requests>=2.28.0",
+]
+
+[project.urls]
+Homepage = "https://chartlibrary.io"
+Documentation = "https://chartlibrary.io/developers"
+Repository = "https://github.com/grahammccain/chart-library-mcp"
+
+[project.scripts]
+chartlibrary-mcp = "mcp_server:main"
+
+[tool.setuptools]
+py-modules = ["mcp_server"]
