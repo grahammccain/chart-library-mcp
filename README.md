@@ -1,4 +1,5 @@
 # Chart Library MCP Server
+<!-- mcp-name: io.github.grahammccain/chart-library -->
 
 [![PyPI](https://img.shields.io/pypi/v/chartlibrary-mcp)](https://pypi.org/project/chartlibrary-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
