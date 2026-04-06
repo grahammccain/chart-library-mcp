@@ -6,6 +6,8 @@
 [![Glama Score](https://img.shields.io/badge/Glama-A_A_A-brightgreen)](https://glama.ai/mcp/servers/@grahammccain/chart-library-mcp)
 [![Tools](https://img.shields.io/badge/MCP_Tools-19-orange)]()
 
+**Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
+
 **Ask your AI agent "what happened the last 10 times a chart looked like this?" and get a real answer.**
 
 24 million pattern embeddings. 10 years of history. 15,000+ stocks. One tool call.
@@ -71,6 +73,42 @@ Add to `.cursor/mcp.json` or VS Code MCP settings:
   }
 }
 ```
+
+### GitHub Copilot (VS Code)
+Add to `.vscode/mcp.json` in your project (this file is already included in the chart-library repos):
+```json
+{
+  "servers": {
+    "chart-library": {
+      "command": "chartlibrary-mcp",
+      "env": {
+        "CHART_LIBRARY_API_KEY": "cl_your_key"
+      }
+    }
+  }
+}
+```
+Copilot Chat will auto-detect the MCP server when you open the project. Use `@mcp` in Copilot Chat to invoke tools.
+
+### ChatGPT (Developer Mode)
+ChatGPT connects to MCP servers via remote HTTP endpoints. To set up:
+
+1. **Enable Developer Mode**: Go to ChatGPT **Settings > Apps > Advanced settings > Developer mode** (requires Pro, Plus, Business, Enterprise, or Education plan)
+2. **Create a connector**: In Settings > Connectors, click **Create** and enter:
+   - **Name**: Chart Library
+   - **Description**: Historical chart pattern search engine -- 24M patterns, 10 years of data
+   - **URL**: `https://chartlibrary.io/mcp`
+   - **Authentication**: No Authentication (or OAuth if using an API key)
+3. **Use in conversations**: Select "Developer mode" from the Plus menu, choose the Chart Library app, and ask questions like "What does NVDA's chart look like historically?"
+
+> **Note**: The remote endpoint at `https://chartlibrary.io/mcp` uses Streamable HTTP transport. If you need SSE fallback, use `https://chartlibrary.io/mcp/sse`.
+
+### Remote MCP Endpoint
+For any MCP client that supports remote HTTP connections:
+```
+https://chartlibrary.io/mcp
+```
+This endpoint supports both Streamable HTTP and SSE transports, no local installation required.
 
 **Free tier: 200 calls/day, no credit card required.** Get an API key at [chartlibrary.io/developers](https://chartlibrary.io/developers) or use basic search without one.
 

@@ -1,0 +1,18 @@
+{
+  "servers": {
+    "chart-library": {
+      "command": "chartlibrary-mcp",
+      "env": {
+        "CHART_LIBRARY_API_KEY": "${input:chartLibraryApiKey}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "chartLibraryApiKey",
+      "type": "promptString",
+      "description": "Chart Library API key (get one at https://chartlibrary.io/developers)",
+      "password": true
+    }
+  ]
+}
