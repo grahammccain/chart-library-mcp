@@ -1017,6 +1017,15 @@ async def get_risk_adjusted_picks(date: str = "", min_sharpe: float = 0.3) -> st
 
 # ── Entry point ──────────────────────────────────────────────
 
-if __name__ == "__main__":
+def main():
+    """Entry point for `chartlibrary-mcp` console script and direct execution.
+
+    Set MCP_TRANSPORT=streamable-http to run as a remote HTTP server
+    (default: stdio for local MCP clients like Claude Desktop).
+    """
     transport = os.getenv("MCP_TRANSPORT", "stdio")
     mcp.run(transport=transport)
+
+
+if __name__ == "__main__":
+    main()
