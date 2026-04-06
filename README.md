@@ -39,12 +39,15 @@ No hallucinated predictions. No refusals. Just factual historical data your agen
 pip install chartlibrary-mcp
 ```
 
+### Claude Desktop (One-Click Install)
+Download the [chart-library-1.1.1.mcpb](https://github.com/grahammccain/chart-library-mcp/raw/master/chart-library-1.1.1.mcpb) extension file and open it with Claude Desktop for automatic installation.
+
 ### Claude Code
 ```bash
 claude mcp add chart-library -- chartlibrary-mcp
 ```
 
-### Claude Desktop
+### Claude Desktop (Manual)
 Add to `claude_desktop_config.json`:
 ```json
 {

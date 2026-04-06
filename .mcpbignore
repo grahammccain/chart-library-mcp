@@ -1,0 +1,23 @@
+# Build artifacts
+dist/
+*.egg-info/
+build/
+__pycache__/
+
+# Tokens and secrets
+.mcpregistry_*
+
+# Large binaries
+*.exe
+*.tar.gz
+
+# IDE / editor
+.vscode/
+.git/
+.github/
+
+# Redundant files
+LICENSE.bak
+publish_registry.sh
+server.json
+chart-library*.mcpb

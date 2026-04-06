@@ -1,0 +1,29 @@
+{
+  "manifest_version": "0.2",
+  "name": "chart-library",
+  "version": "1.1.1",
+  "description": "Historical chart pattern search engine with 19 MCP tools. Find similar patterns from 24M+ embeddings across 19K symbols and 10 years of data.",
+  "author": {
+    "name": "Chart Library",
+    "email": "graham@chartlibrary.io",
+    "url": "https://chartlibrary.io"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "mcp_server.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "${__dirname}/mcp_server.py"
+      ],
+      "env": {}
+    }
+  },
+  "license": "MIT",
+  "homepage": "https://chartlibrary.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grahammccain/chart-library-mcp"
+  },
+  "keywords": ["chart patterns", "stock analysis", "trading", "market intelligence", "AI agent"]
+}
