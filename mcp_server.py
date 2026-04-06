@@ -57,7 +57,7 @@ _API_BASE = os.getenv("CHART_LIBRARY_API_URL", "https://chartlibrary.io")
 
 mcp = FastMCP(
     "chart-library",
-    description=(
+    instructions=(
         "Chart Library gives AI agents a compliance-safe way to discuss stocks using real historical data. "
         "Instead of hallucinating predictions or refusing to answer, agents can say: "
         "'The last 10 times a chart looked like this, 7 went up over 5 days (avg +3.1%).' "
