@@ -624,12 +624,18 @@ async def get_regime_win_rates(symbol: str, date: str = "") -> str:
         regime_names = {0: "bull+calm", 1: "bull+volatile", 2: "bear+calm", 3: "bear+volatile"}
 
         # Get the symbol's pattern data for the date
-        date_filter = f"AND test_date = '{date}'" if date else "ORDER BY test_date DESC LIMIT 1"
-        symbol_row = _query_db(f"""
-            SELECT up_count_5d, wpred_5d, actual_5d, n_matches, avg_distance
-            FROM forward_tests WHERE symbol = %s AND up_count_5d IS NOT NULL
-            {date_filter}
-        """, (symbol.upper(),))
+        if date:
+            symbol_row = _query_db("""
+                SELECT up_count_5d, wpred_5d, actual_5d, n_matches, avg_distance
+                FROM forward_tests WHERE symbol = %s AND up_count_5d IS NOT NULL
+                AND test_date = %s
+            """, (symbol.upper(), date))
+        else:
+            symbol_row = _query_db("""
+                SELECT up_count_5d, wpred_5d, actual_5d, n_matches, avg_distance
+                FROM forward_tests WHERE symbol = %s AND up_count_5d IS NOT NULL
+                ORDER BY test_date DESC LIMIT 1
+            """, (symbol.upper(),))
 
         # Get regime-specific win rates from all historical data
         regime_stats = _query_db("""
@@ -902,19 +908,31 @@ async def get_risk_adjusted_picks(date: str = "", min_sharpe: float = 0.3) -> st
         min_sharpe: Minimum risk-adjusted score to include (default 0.3)
     """
     try:
-        date_filter = f"test_date = '{date}'" if date else "test_date = (SELECT MAX(test_date) FROM forward_tests WHERE actual_5d IS NOT NULL)"
-
-        rows = _query_db(f"""
-            SELECT symbol, direction, up_count_5d, wpred_5d,
-                   actual_5d, interest_score, trailing_vol,
-                   median_ret_5d, ret_range_low, ret_range_high,
-                   n_matches, avg_distance
-            FROM forward_tests
-            WHERE {date_filter}
-              AND up_count_5d IS NOT NULL
-              AND ret_range_low IS NOT NULL
-              AND ret_range_high IS NOT NULL
-            ORDER BY interest_score DESC NULLS LAST
+        if date:
+            rows = _query_db("""
+                SELECT symbol, direction, up_count_5d, wpred_5d,
+                       actual_5d, interest_score, trailing_vol,
+                       median_ret_5d, ret_range_low, ret_range_high,
+                       n_matches, avg_distance
+                FROM forward_tests
+                WHERE test_date = %s
+                  AND up_count_5d IS NOT NULL
+                  AND ret_range_low IS NOT NULL
+                  AND ret_range_high IS NOT NULL
+                ORDER BY interest_score DESC NULLS LAST
+            """, (date,))
+        else:
+            rows = _query_db("""
+                SELECT symbol, direction, up_count_5d, wpred_5d,
+                       actual_5d, interest_score, trailing_vol,
+                       median_ret_5d, ret_range_low, ret_range_high,
+                       n_matches, avg_distance
+                FROM forward_tests
+                WHERE test_date = (SELECT MAX(test_date) FROM forward_tests WHERE actual_5d IS NOT NULL)
+                  AND up_count_5d IS NOT NULL
+                  AND ret_range_low IS NOT NULL
+                  AND ret_range_high IS NOT NULL
+                ORDER BY interest_score DESC NULLS LAST
         """)
 
         picks = []
