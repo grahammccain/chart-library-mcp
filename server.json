@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.grahammccain/chart-library",
   "title": "Chart Library — Pattern Intelligence",
-  "description": "23 MCP tools for context-aware chart pattern intelligence — 24M+ embeddings, 15K+ symbols, 10 years, with market regime conditioning (VIX, yield curve, credit spreads, breadth).",
+  "description": "23 MCP tools. Context-aware chart pattern intelligence. 24M embeddings, regime-conditioned.",
   "repository": {
     "url": "https://github.com/grahammccain/chart-library-mcp",
     "source": "github"
