@@ -393,10 +393,13 @@ async def analyze_pattern(
     top_n: int = 10,
     include_summary: bool = True,
     context_weight: float = 0.0,
+    same_sector: bool = False,
 ) -> str:
     """Use this for any question about a stock — 'what do you think about NVDA?', 'is TSLA bullish?', 'should I buy AAPL?', 'what happened to AMD today?'. Searches 24M historical patterns, finds the 10 most similar charts, and shows what happened next (1/3/5/10 day returns) with an AI summary. Just pass a ticker like 'NVDA' or ticker+date like 'AAPL 2024-06-15'.
 
     Set context_weight > 0 to get regime-aware matches: patterns that look similar AND occurred in a similar market regime (VIX, yield curve, credit spreads, breadth). Recommended value: 0.05. Use when user asks 'does this pattern work in this kind of market?'.
+
+    Set same_sector=True to restrict matches to the query symbol's own GICS sector — peer-relative analysis. Use when user asks 'how do semis usually trade here?' or 'compare against peers'.
 
     Args:
         query: Just a ticker ("NVDA"), or ticker + date ("AAPL 2024-06-15"), or "TSLA yesterday"
@@ -404,6 +407,7 @@ async def analyze_pattern(
         top_n: Number of results (1-50)
         include_summary: Whether to include AI-generated summary (default True)
         context_weight: 0.0 = shape only, 0.05 = recommended regime-aware, 1.0 = context dominates
+        same_sector: If True, only match charts from the query symbol's own GICS sector (peer-relative analysis)
     """
     try:
         # Use format=agent to strip visualization bloat (paths, bars, share_urls)
@@ -411,6 +415,7 @@ async def analyze_pattern(
         body = {
             "query": query, "timeframe": timeframe, "top_n": top_n,
             "include_summary": include_summary, "context_weight": context_weight,
+            "same_sector": same_sector,
             "format": "agent",
         }
         if _use_http():
@@ -420,6 +425,137 @@ async def analyze_pattern(
                 query=query, timeframe=timeframe, top_n=top_n,
                 include_summary=include_summary,
             )
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def get_cohort_distribution(
+    symbol: str,
+    date: str,
+    timeframe: str = "rth",
+    horizons: list[int] | None = None,
+    same_sector: bool = False,
+    same_vix_bucket: bool = False,
+    same_trend: bool = False,
+    same_cap_bucket: bool = False,
+    no_earnings_within_days: int | None = None,
+    date_range: list[str] | None = None,
+    top_k: int = 500,
+    include_path_stats: bool = True,
+) -> str:
+    """The Chart Library primitive for AI agents: **conditional distribution** of forward outcomes for a chart pattern.
+
+    Returns historical return distribution (p10/p25/p50/p75/p90), MAE (max adverse excursion), MFE (max favorable excursion), realized volatility, hit rates, and sample size — conditioned on the filters you pass. Survivorship flag + named-event tags on top matches. Use this INSTEAD of search + follow-through when you need statistics, not a list of charts.
+
+    Args:
+        symbol: Ticker (e.g. "NVDA")
+        date: ISO date, e.g. "2026-04-10"
+        timeframe: "rth" (default) / "premarket" / "rth_3d" / "rth_5d" / "rth_10d"
+        horizons: Forward horizons in trading days. Default [5, 10]. Max 252.
+        same_sector: Keep only matches from the same sector (GICS or SIC fallback) as the anchor
+        same_vix_bucket: Keep only matches whose VIX regime is close to the anchor's (±0.15 percentile)
+        same_trend: Keep only matches with similar SPY 20d trend regime as the anchor
+        same_cap_bucket: Keep only matches in the same market-cap bucket as the anchor
+        no_earnings_within_days: Exclude matches within N days of an earnings report
+        date_range: [start_iso, end_iso] to restrict historical period
+        top_k: Cohort size used for stats (10-2000). Larger = tighter CIs, slower.
+        include_path_stats: Include MAE/MFE/realized-vol (default True, adds ~0ms from cache)
+    """
+    try:
+        filters: dict = {}
+        if same_sector:
+            filters["sector"] = "same_as_anchor"
+        regime = {}
+        if same_vix_bucket: regime["same_vix_bucket"] = True
+        if same_trend: regime["same_trend"] = True
+        if regime: filters["regime"] = regime
+        if same_cap_bucket: filters["liquidity"] = {"same_cap_bucket": True}
+        if no_earnings_within_days is not None:
+            filters["event"] = {"no_earnings_within_days": no_earnings_within_days}
+        if date_range:
+            filters["date_range"] = date_range
+        body = {
+            "anchor": {"symbol": symbol, "date": date, "timeframe": timeframe},
+            "filters": filters,
+            "horizons": horizons or [5, 10],
+            "top_k": top_k,
+            "include_path_stats": include_path_stats,
+        }
+        result = _http_post("/api/v1/cohort", body)
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def refine_cohort_with_filters(
+    cohort_id: str,
+    same_vix_bucket: bool = False,
+    same_trend: bool = False,
+    date_range: list[str] | None = None,
+    horizons: list[int] | None = None,
+    include_path_stats: bool = True,
+) -> str:
+    """Narrow a stored cohort (from get_cohort_distribution) with additional filters — sub-second, no kNN re-run. Part of the edge-mining loop: start broad, progressively filter, see how the distribution shifts. Returns a new cohort_id so you can fork branches.
+
+    Args:
+        cohort_id: Session handle returned by get_cohort_distribution (15-min TTL)
+        same_vix_bucket: Restrict to matches whose VIX regime is close to the anchor's
+        same_trend: Restrict to matches whose SPY 20d trend regime matches the anchor's
+        date_range: [start_iso, end_iso] to further restrict historical period
+        horizons: Override horizons for this refinement (else inherits parent's)
+        include_path_stats: Include MAE/MFE in the refined distribution (default True)
+    """
+    try:
+        extra: dict = {}
+        regime = {}
+        if same_vix_bucket: regime["same_vix_bucket"] = True
+        if same_trend: regime["same_trend"] = True
+        if regime: extra["regime"] = regime
+        if date_range: extra["date_range"] = date_range
+        body = {
+            "extra_filters": extra,
+            "horizons": horizons,
+            "include_path_stats": include_path_stats,
+        }
+        result = _http_post(f"/api/v1/cohort/{cohort_id}/filter", body)
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def explain_cohort_filters(cohort_id: str, horizon: int = 5) -> str:
+    """For a stored cohort, rank which candidate filter (same_vix_bucket, same_trend, recent_5y) would shift the distribution most. Tells you which dimension actually matters for this setup in this regime. Use AFTER get_cohort_distribution to guide refine_cohort_with_filters.
+
+    Args:
+        cohort_id: Session handle from get_cohort_distribution (15-min TTL)
+        horizon: Horizon (trading days) at which to measure distribution shift. Default 5.
+    """
+    try:
+        result = _http_get(f"/api/v1/cohort/{cohort_id}/explain?horizon={horizon}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def compare_to_peers(symbol: str, date: str = "", timeframe: str = "rth", top_n: int = 20) -> str:
+    """Compare a stock's pattern to same-sector peers vs. the broader market — 'how do semis usually react here?', 'is this sector-specific or market-wide?'. Runs two searches side-by-side and returns 5-day stats for each plus a divergence score showing whether the sector reacts differently than the market to this pattern shape.
+
+    Args:
+        symbol: Ticker symbol, e.g. 'NVDA'
+        date: Date in YYYY-MM-DD format (defaults to latest trading day)
+        timeframe: Session: rth (default), premarket, rth_3d, rth_5d
+        top_n: Number of matches per search (default 20, max 50)
+    """
+    try:
+        params = f"?timeframe={timeframe}&top_n={top_n}"
+        if date:
+            params += f"&date={date}"
+        result = _http_get(f"/api/v1/peer-comparison/{symbol.upper()}{params}") if _use_http() else {"error": "peer-comparison requires HTTP mode"}
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"error": str(e)})

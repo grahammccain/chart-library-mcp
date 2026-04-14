@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/chartlibrary-mcp)](https://pypi.org/project/chartlibrary-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Glama Score](https://img.shields.io/badge/Glama-A_A_A-brightgreen)](https://glama.ai/mcp/servers/@grahammccain/chart-library-mcp)
-[![Tools](https://img.shields.io/badge/MCP_Tools-23-orange)]()
+[![Tools](https://img.shields.io/badge/MCP_Tools-22-orange)]()
 
 **Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
 
@@ -164,7 +164,16 @@ This endpoint supports both Streamable HTTP and SSE transports, no local install
 
 ---
 
-## 19 Tools
+## 22 Tools
+
+### Conditional Distribution (3 tools — the primitive)
+| Tool | What it does |
+|------|-------------|
+| `get_cohort_distribution` | Return/MAE/MFE/realized-vol percentiles for a chart pattern, filtered by regime/sector/liquidity. One call, one distribution, with sample size + survivorship flag. **The tool every stock-research agent should call.** |
+| `refine_cohort_with_filters` | Narrow a stored cohort with extra filters. Sub-second — no kNN re-run — so agents can fork and compare branches cheaply. |
+| `explain_cohort_filters` | Rank which additional filter would shift the distribution most for a stored cohort. The edge-mining discovery step. |
+
+These three tools replace hallucinated "on average this pattern returns X%" with real conditional base rates. See the [grounded-base-rates pattern](https://chartlibrary.io/blog/how-to-build-a-stock-agent-that-doesnt-hallucinate) for the full loop.
 
 ### Core Search (7 tools)
 | Tool | What it does |

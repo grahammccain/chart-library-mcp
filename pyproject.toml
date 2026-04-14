@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chartlibrary-mcp"
-version = "1.2.0"
-description = "Chart Library MCP Server — 23 tools for context-aware chart pattern intelligence, market regime analysis, and agent-first trading signals"
+version = "1.3.0"
+description = "Chart Library MCP Server — 25 tools including the Conditional Distribution primitive (cohort, refine, explain) for grounded base rates in AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
