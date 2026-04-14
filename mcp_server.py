@@ -449,6 +449,8 @@ async def get_cohort_distribution(
 
     Returns historical return distribution (p10/p25/p50/p75/p90), MAE (max adverse excursion), MFE (max favorable excursion), realized volatility, hit rates, and sample size — conditioned on the filters you pass. Survivorship flag + named-event tags on top matches. Use this INSTEAD of search + follow-through when you need statistics, not a list of charts.
 
+    Each distribution also returns `calibrated_return_pct` (split-conformal adjusted) alongside the raw quantiles. Raw p10/p90 runs too narrow (~68% empirical coverage vs 80% nominal); calibrated bands are validated to hit ~80% on held-out anchors. For sizing and risk use calibrated bands; for ranking use raw.
+
     Args:
         symbol: Ticker (e.g. "NVDA")
         date: ISO date, e.g. "2026-04-10"
