@@ -439,6 +439,11 @@ async def get_cohort_distribution(
     same_sector: bool = False,
     same_vix_bucket: bool = False,
     same_trend: bool = False,
+    same_vrp_bucket: bool = False,
+    same_term_bucket: bool = False,
+    same_credit_bucket: bool = False,
+    same_curve_bucket: bool = False,
+    same_breadth_bucket: bool = False,
     same_cap_bucket: bool = False,
     no_earnings_within_days: int | None = None,
     date_range: list[str] | None = None,
@@ -459,6 +464,11 @@ async def get_cohort_distribution(
         same_sector: Keep only matches from the same sector (GICS or SIC fallback) as the anchor
         same_vix_bucket: Keep only matches whose VIX regime is close to the anchor's (±0.15 percentile)
         same_trend: Keep only matches with similar SPY 20d trend regime as the anchor
+        same_vrp_bucket: Keep only matches with similar variance risk premium (implied-vs-realized vol gap) as the anchor — best single-factor regime predictor per academic literature
+        same_term_bucket: Keep only matches with similar VIX term structure (contango vs backwardation)
+        same_credit_bucket: Keep only matches with similar credit spread regime (HYG/LQD proxy)
+        same_curve_bucket: Keep only matches with similar yield curve slope (10Y-2Y proxy)
+        same_breadth_bucket: Keep only matches with similar market breadth (% stocks above 50d MA)
         same_cap_bucket: Keep only matches in the same market-cap bucket as the anchor
         no_earnings_within_days: Exclude matches within N days of an earnings report
         date_range: [start_iso, end_iso] to restrict historical period
@@ -472,6 +482,11 @@ async def get_cohort_distribution(
         regime = {}
         if same_vix_bucket: regime["same_vix_bucket"] = True
         if same_trend: regime["same_trend"] = True
+        if same_vrp_bucket: regime["same_vrp_bucket"] = True
+        if same_term_bucket: regime["same_term_bucket"] = True
+        if same_credit_bucket: regime["same_credit_bucket"] = True
+        if same_curve_bucket: regime["same_curve_bucket"] = True
+        if same_breadth_bucket: regime["same_breadth_bucket"] = True
         if regime: filters["regime"] = regime
         if same_cap_bucket: filters["liquidity"] = {"same_cap_bucket": True}
         if no_earnings_within_days is not None:
