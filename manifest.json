@@ -1,8 +1,8 @@
 {
   "manifest_version": "0.2",
   "name": "chart-library",
-  "version": "1.1.1",
-  "description": "Historical chart pattern search engine with 19 MCP tools. Find similar patterns from 24M+ embeddings across 19K symbols and 10 years of data.",
+  "version": "2.0.0",
+  "description": "Historical chart pattern search engine with 8 canonical MCP tools (+ legacy aliases). Find similar patterns from 24M+ embeddings across 15K+ symbols and 10 years of data.",
   "author": {
     "name": "Chart Library",
     "email": "graham@chartlibrary.io",

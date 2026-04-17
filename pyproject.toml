@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chartlibrary-mcp"
-version = "1.4.1"
-description = "Chart Library MCP Server — 25 tools including the Conditional Distribution primitive with conformal-calibrated quantile bands and 7 regime filters (VIX, VRP, term structure, credit, curve, breadth, trend) for grounded base rates in AI agents"
+version = "2.0.0"
+description = "Chart Library MCP Server — 8 canonical tools (search, cohort, analyze, context, explain, portfolio, anchor_fetch, report_feedback) for grounded historical pattern intelligence. Conditional distributions with conformal-calibrated quantile bands, 7 regime filters, and a session-handle edge-mining loop for AI agents."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [

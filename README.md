@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/chartlibrary-mcp)](https://pypi.org/project/chartlibrary-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Glama Score](https://img.shields.io/badge/Glama-A_A_A-brightgreen)](https://glama.ai/mcp/servers/@grahammccain/chart-library-mcp)
-[![Tools](https://img.shields.io/badge/MCP_Tools-22-orange)]()
+[![Tools](https://img.shields.io/badge/MCP_Tools-8-orange)]()
 
 **Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
 
@@ -164,51 +164,48 @@ This endpoint supports both Streamable HTTP and SSE transports, no local install
 
 ---
 
-## 22 Tools
+## 8 Canonical Tools
 
-### Conditional Distribution (3 tools — the primitive)
+Chart Library 2.0 consolidates 22 legacy tools into 8 composable primitives. Chain them via `cohort_id` handles for sub-second refinement without re-running kNN.
+
 | Tool | What it does |
 |------|-------------|
-| `get_cohort_distribution` | Return/MAE/MFE/realized-vol percentiles for a chart pattern, filtered by regime/sector/liquidity. One call, one distribution, with sample size + survivorship flag. **The tool every stock-research agent should call.** |
-| `refine_cohort_with_filters` | Narrow a stored cohort with extra filters. Sub-second — no kNN re-run — so agents can fork and compare branches cheaply. |
-| `explain_cohort_filters` | Rank which additional filter would shift the distribution most for a stored cohort. The edge-mining discovery step. |
+| `search` | Entry point. Returns `cohort_id` + anchor + n_matches for a ticker+date. Feed the handle into `cohort`, `analyze`, or `explain` to chain. |
+| `cohort` | **The core primitive.** Conditional distribution (p10/p25/p50/p75/p90 + calibrated bands + MAE/MFE + hit rates + survivorship) for a chart pattern, filtered by regime/sector/liquidity/event. One call replaces the legacy `get_cohort_distribution`, `refine_cohort_with_filters`, `run_scenario`, and `get_regime_win_rates`. |
+| `analyze` | Analytic metrics via `metric=` enum: `anomaly`, `volume_profile`, `crowding`, `correlation_shift`, `earnings_reaction`, `pattern_degradation`, `regime_accuracy`. |
+| `context` | Situational data via `target=`: ticker metadata, market regime + sector rotation, or DB coverage stats. |
+| `explain` | Narrative + rankings via `style=` enum: `filter_ranking` (which filter shifts the distribution most), `prose` (plain-English summary), `position_guidance` (exit signals), `risk_ranking` (Sharpe-ranked picks). |
+| `portfolio` | Portfolio-level conditional distribution across holdings. Weight-averages distributions, ranks tail contributors. |
+| `anchor_fetch` | **New in 2.0.** Lightweight (symbol, date) metadata fetch — sector, market cap, point-in-time regime. Avoids full kNN when you just need context for a ticker. |
+| `report_feedback` | Report errors or suggest improvements. |
 
-These three tools replace hallucinated "on average this pattern returns X%" with real conditional base rates. See the [grounded-base-rates pattern](https://chartlibrary.io/blog/how-to-build-a-stock-agent-that-doesnt-hallucinate) for the full loop.
+These tools replace hallucinated "on average this pattern returns X%" with real conditional base rates. See the [grounded-base-rates pattern](https://chartlibrary.io/blog/how-to-build-a-stock-agent-that-doesnt-hallucinate) for the full loop.
 
-### Core Search (7 tools)
-| Tool | What it does |
-|------|-------------|
-| `analyze_pattern` | Full analysis in one call: search + returns + AI summary |
-| `search_charts` | Find the 10 most similar historical patterns for any ticker |
-| `get_follow_through` | 1/3/5/10-day forward returns from matches |
-| `get_pattern_summary` | Plain-English AI summary of pattern implications |
-| `get_discover_picks` | Today's top patterns ranked by interest score |
-| `search_batch` | Analyze up to 20 symbols in parallel |
-| `get_status` | Database coverage and health stats |
+### Typical agent flow
 
-### Market Intelligence (7 tools)
-| Tool | What it does |
-|------|-------------|
-| `detect_anomaly` | Is this pattern unusual vs the stock's own history? |
-| `get_volume_profile` | Intraday volume breakdown vs historical norms |
-| `get_sector_rotation` | Sector leadership rankings with regime classification |
-| `get_crowding` | Signal crowding: are too many stocks pointing the same way? |
-| `get_earnings_reaction` | How has this stock historically reacted to earnings? |
-| `get_correlation_shift` | Stocks breaking from their usual SPY correlation |
-| `run_scenario` | Conditional returns: "what if the market does X?" |
+```
+1. search("NVDA 2024-06-18")                          → cohort_id
+2. cohort(cohort_id=..., filters={regime:{same_vix_bucket: true}})
+                                                       → conditional distribution
+3. explain(cohort_id=..., style="filter_ranking")     → which filter matters most
+4. cohort(cohort_id=..., filters={...new filter...})  → refined distribution
+```
 
-### Trading Intelligence (4 tools)
-| Tool | What it does |
-|------|-------------|
-| `get_regime_win_rates` | Win rates filtered by current VIX/yield regime |
-| `get_pattern_degradation` | Are signals losing edge vs historical accuracy? |
-| `get_exit_signal` | Should you hold or exit based on pattern data? |
-| `get_risk_adjusted_picks` | Sharpe-ranked picks from today's pattern scan |
+### Legacy tools (deprecated, still callable)
 
-### Utility (1 tool)
-| Tool | What it does |
-|------|-------------|
-| `report_feedback` | Report errors or suggest improvements |
+For backward compatibility, these 22 legacy tool names remain in place and are marked
+`deprecated` in their MCP annotations. They forward to the canonical tool and will be
+removed in a future major release. Migrate via the mapping below:
+
+| Legacy | Replacement |
+|--------|-------------|
+| `search_charts`, `search_batch`, `get_discover_picks` | `search` |
+| `get_cohort_distribution`, `refine_cohort_with_filters`, `run_scenario`, `get_regime_win_rates`, `compare_to_peers` | `cohort` |
+| `detect_anomaly`, `get_volume_profile`, `get_crowding`, `get_earnings_reaction`, `get_correlation_shift`, `get_pattern_degradation`, `get_regime_accuracy` | `analyze` (metric=) |
+| `get_sector_rotation`, `get_status`, `get_market_context` | `context` |
+| `get_pattern_summary`, `explain_cohort_filters`, `get_exit_signal`, `get_risk_adjusted_picks` | `explain` (style=) |
+| `get_portfolio_health` | `portfolio` |
+| `analyze_pattern`, `get_follow_through`, `check_ticker` | `search` + `cohort` (+ optional `explain`) |
 
 ---
 
