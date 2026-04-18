@@ -90,7 +90,7 @@ def _use_http() -> bool:
     return True
 
 
-_MCP_USER_AGENT = "chartlibrary-mcp/2.0.0"
+_MCP_USER_AGENT = "chartlibrary-mcp/3.0.0"
 
 
 def _http_post(path: str, body: dict) -> dict:
@@ -333,6 +333,98 @@ async def anchor_fetch(symbol: str, date: str | None = None) -> str:
     try:
         target = {"symbol": symbol, "date": date} if date else symbol
         result = _http_post("/api/v2/context", {"target": target})
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [str(e)]}})
+
+
+# ── Intelligence layer (v3.0) ────────────────────────────────
+
+@mcp.tool(annotations=READ_ONLY)
+async def decompose(cohort_id: str, horizon: int = 10, max_slices: int = 20, explain: bool = False) -> str:
+    """Find the slice conditions that differentiated winners from losers in a cohort.
+
+    Given a stored cohort_id, automatically discovers which feature values (volume regime,
+    trend state, sector, intraday pattern, days-to-earnings, etc.) partition the cohort
+    into statistically different forward-return distributions. Each slice returns n,
+    median forward return, delta vs cohort baseline, bootstrap 95% CI, stat-sig flag,
+    hit rate, and above-5% rate.
+
+    This is the "SMB/prop-trader conditional analysis" primitive: instead of a single
+    point estimate, surface the ANDed conditions under which this chart pattern
+    historically worked vs didn't. Historical framing only — no forward recommendations.
+
+    Args:
+        cohort_id: Handle from `cohort` or `search`
+        horizon: Forward horizon in trading days (default 10)
+        max_slices: Cap on returned slice conditions (default 20)
+        explain: If true, also return a Haiku natural-language narrative tying the top
+                 slices together with citations.
+    """
+    try:
+        url = f"/api/v1/cohort/{cohort_id}/decompose"
+        params = {"horizon": horizon, "max_slices": max_slices}
+        if explain:
+            params["explain"] = "true"
+        import urllib.parse
+        qs = urllib.parse.urlencode(params)
+        result = _http_get(f"{url}?{qs}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [str(e)]}})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def clusters(cohort_id: str, horizon: int = 10, k: int | None = None) -> str:
+    """K-means cluster a cohort's matches by how they resolved intraday on the
+    forward day. Surfaces sub-cohorts like "ripped open + followed through",
+    "opened strong then faded", "late-day dump", "tight-range chop", each with
+    its own forward-return distribution.
+
+    Complements `decompose` — `decompose` slices by INPUT conditions (what setups
+    were the matches in), `clusters` slices by OUTPUT behavior (how each setup
+    resolved). Both together give the fullest picture.
+
+    Args:
+        cohort_id: Handle from `cohort` or `search`
+        horizon: Forward horizon in trading days (default 10)
+        k: Number of clusters. If None, auto-selected via silhouette (range 3-8).
+    """
+    try:
+        url = f"/api/v1/cohort/{cohort_id}/clusters"
+        params = {"horizon": horizon}
+        if k is not None:
+            params["k"] = k
+        import urllib.parse
+        qs = urllib.parse.urlencode(params)
+        result = _http_get(f"{url}?{qs}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [str(e)]}})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def live_search(bars: list, scale: str = "1h", top_k: int = 50, cross_timeframe: bool = False) -> str:
+    """Encode a raw chart window on the fly and find similar historical patterns.
+
+    Accepts OHLCV bars directly (no anchor date required). Useful when the agent has
+    access to live chart data for a symbol/date not pre-embedded in our DB, or for
+    synthetic/constructed patterns. Server encodes the window via the V5 intraday
+    encoder and runs a kNN search across 4.5M embedded intraday patterns.
+
+    Minimum 405 bars (384-bar V5 window + ~21 for z-score warmup). Each bar must
+    include open/high/low/close/volume; vwap optional (falls back to close).
+
+    Args:
+        bars: List of dicts with keys open, high, low, close, volume, (vwap).
+              Must be chronological, at least 405 bars, at the specified `scale`.
+        scale: Target V5 scale — '5m', '15m', '30m', or '1h'.
+        top_k: Number of historical matches to return (1-500, default 50).
+        cross_timeframe: If true, matches may span any V5 scale not just query's.
+    """
+    try:
+        body = {"bars": bars, "scale": scale, "top_k": top_k, "cross_timeframe": cross_timeframe}
+        result = _http_post("/api/v1/cohort/live", body)
         return json.dumps(result, default=str, indent=2)
     except Exception as e:
         return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [str(e)]}})

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chartlibrary-mcp"
-version = "2.0.0"
-description = "Chart Library MCP Server — 8 canonical tools (search, cohort, analyze, context, explain, portfolio, anchor_fetch, report_feedback) for grounded historical pattern intelligence. Conditional distributions with conformal-calibrated quantile bands, 7 regime filters, and a session-handle edge-mining loop for AI agents."
+version = "3.0.0"
+description = "Chart Library MCP Server — intelligence layer for stock pattern agents. 11 tools: search, cohort, analyze, context, explain, portfolio, anchor_fetch, decompose (conditional slice discovery), clusters (K-means on intraday resolution), live_search (raw-bars → historical matches), report_feedback. Conditional distributions with conformal-calibrated quantile bands, catalyst-aware metadata, and per-cohort decomposition + clustering for SMB/prop-trader-style conditional analysis."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
