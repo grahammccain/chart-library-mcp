@@ -118,9 +118,10 @@ def _http_get(path: str) -> dict:
     return resp.json()
 
 
-# ── Canonical 8-tool surface ─────────────────────────────────
-# v5-specific internals (embedding_version, cross_timeframe, v5 calibration meta) are
-# NEVER accepted/returned on the public MCP surface.
+# ── Canonical tool surface ───────────────────────────────────
+# Implementation internals (embedding version, cross-timeframe routing,
+# calibration metadata) are intentionally hidden from the public MCP
+# surface.
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -408,19 +409,20 @@ async def live_search(bars: list, scale: str = "1h", top_k: int = 50, cross_time
     """Encode a raw chart window on the fly and find similar historical patterns.
 
     Accepts OHLCV bars directly (no anchor date required). Useful when the agent has
-    access to live chart data for a symbol/date not pre-embedded in our DB, or for
-    synthetic/constructed patterns. Server encodes the window via the V5 intraday
-    encoder and runs a kNN search across 4.5M embedded intraday patterns.
+    access to live chart data for a symbol/date not pre-embedded in our pool, or for
+    synthetic/constructed patterns. The server encodes the window and runs a
+    similarity search across the historical pattern library.
 
-    Minimum 405 bars (384-bar V5 window + ~21 for z-score warmup). Each bar must
-    include open/high/low/close/volume; vwap optional (falls back to close).
+    Minimum input size constraints apply — the server returns a helpful error if
+    the bar count is too small. Each bar must include open/high/low/close/volume;
+    vwap optional (falls back to close).
 
     Args:
         bars: List of dicts with keys open, high, low, close, volume, (vwap).
-              Must be chronological, at least 405 bars, at the specified `scale`.
-        scale: Target V5 scale — '5m', '15m', '30m', or '1h'.
+              Must be chronological at the specified `scale`.
+        scale: Target timeframe — '5m', '15m', '30m', or '1h'.
         top_k: Number of historical matches to return (1-500, default 50).
-        cross_timeframe: If true, matches may span any V5 scale not just query's.
+        cross_timeframe: If true, matches may span any timeframe, not just the query's.
     """
     try:
         body = {"bars": bars, "scale": scale, "top_k": top_k, "cross_timeframe": cross_timeframe}

@@ -211,15 +211,15 @@ removed in a future major release. Migrate via the mapping below:
 
 ## How It Works
 
-Chart Library uses **24 million pre-computed pattern embeddings** (multi-channel numerical encodings of price, volume, volatility, and VWAP) indexed with **pgvector** for sub-10ms similarity search.
+Chart Library indexes a large library of historical chart patterns and exposes them behind a conditional-distribution API. Every query returns sample sizes, percentiles, and calibrated forward-return bands — never a point forecast.
 
 When your agent calls `analyze_pattern("NVDA")`, the server:
-1. Computes NVDA's current embedding from the latest market data
-2. Finds the 10 nearest neighbors by L2 distance across all stocks and dates
-3. Looks up what happened 1, 3, 5, and 10 days after each historical match
-4. Generates a plain-English summary via Claude Haiku
+1. Builds a representation of NVDA's current chart state
+2. Retrieves historically similar patterns
+3. Looks up what happened over the following 1, 3, 5, and 10 days
+4. Returns the distribution + a plain-English summary via Claude Haiku
 
-The result: factual, citation-ready statements like *"8 of 10 similar patterns gained over 5 days"* that your agent can present without hallucinating or hedging.
+The result: factual, citation-ready statements like *"out of N similar historical patterns, the median 5-day return was X% (80% band [p10, p90])"* that your agent can present without hallucinating or hedging.
 
 ---
 
