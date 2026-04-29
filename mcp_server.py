@@ -238,6 +238,74 @@ async def analyze(
 
 
 @mcp.tool(annotations=READ_ONLY)
+async def cohort_analyze(
+    symbol: str,
+    date: str,
+    timeframe: str = "1h",
+    cohort_size: int = 500,
+    filters: dict | None = None,
+    horizons: list[int] | None = None,
+    include_feature_importance: bool = True,
+    include_regime_stratification: bool = True,
+    include_risk_profile: bool = True,
+    exclude_same_symbol_days: int = 10,
+) -> str:
+    """Layer 3 cohort intelligence — V5 retrieval + Layer 2 metadata.
+
+    Given a (symbol, date, timeframe) anchor, returns:
+      • outcome distribution per horizon (1d / 5d / 10d default)
+      • per-feature importance — which Layer 2 features separated winners
+        from losers within this specific cohort (regime, sector RS, news,
+        sentiment, narrative_change_score, etc.)
+      • regime stratification — outcomes sliced by vol_regime
+      • risk profile — drawdown / runup percentiles
+      • cohort tightness score
+      • narrative_change_score — composite of frequency anomaly, tone shift,
+        sentiment-price misalignment (priced-in vs narrative-change)
+
+    Empirical-distribution analysis. Does NOT predict a single point return —
+    surfaces what historical analogs did and which features mattered.
+
+    Distinct from `cohort` (the v2-era distribution primitive). This tool
+    runs the North Star Layer 3 analyzer on V5 embeddings with rich Layer 2
+    metadata (vol regime, macro state, sector RS, earnings calendar, news
+    sentiment via FinBERT, etc.).
+
+    Args:
+        symbol: Ticker (e.g. "NVDA")
+        date: Anchor date, ISO YYYY-MM-DD
+        timeframe: One of 5m / 15m / 30m / 1h / 1d (default 1h)
+        cohort_size: Target K nearest neighbors (default 500, range 30-2000)
+        filters: Optional Layer 2 metadata constraints. Keys:
+            vol_regime: list of "low"/"mid"/"high"
+            macro_state: list of "bullish"/"neutral"/"bearish"
+            has_news: bool (only meaningful for 2024+ anchors)
+            days_since_earnings / days_since_ath / sector_rs / realized_vol /
+            relative_volume: dict with "min" and/or "max"
+        horizons: list of forward-return horizons (default [1, 5, 10])
+        exclude_same_symbol_days: drop same-symbol analogs within N days
+            of the anchor (default 10; autocorrelation control)
+    """
+    try:
+        body = {
+            "anchor": {"symbol": symbol, "date": date, "timeframe": timeframe},
+            "cohort_size": cohort_size,
+            "horizons": horizons or [1, 5, 10],
+            "filters": filters,
+            "options": {
+                "include_feature_importance": include_feature_importance,
+                "include_regime_stratification": include_regime_stratification,
+                "include_risk_profile": include_risk_profile,
+                "exclude_same_symbol_days": exclude_same_symbol_days,
+            },
+        }
+        result = _http_post("/api/v1/cohort_analyze", body)
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [str(e)]}})
+
+
+@mcp.tool(annotations=READ_ONLY)
 async def context(target: str = "market") -> str:
     """Situational data about a target — ticker metadata, market regime, or DB coverage.
 

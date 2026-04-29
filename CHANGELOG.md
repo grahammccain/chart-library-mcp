@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.1.0
+
+Add `cohort_analyze` — Layer 3 cohort intelligence tool.
+
+### New tool
+
+- **`cohort_analyze`** — V5 retrieval + Layer 2 metadata join. Given a
+  `(symbol, date, timeframe)` anchor, returns:
+  - outcome distribution per horizon (1d / 5d / 10d)
+  - per-feature importance (logistic regression of features → win/loss)
+  - regime stratification (sliced by `vol_regime`)
+  - risk profile (drawdown / runup percentiles)
+  - cohort tightness score
+  - `narrative_change_score` — composite of frequency anomaly, tone shift,
+    sentiment-price misalignment (priced-in vs narrative-change distinction)
+- Filters on 13 metadata dimensions including news sentiment (FinBERT-scored
+  on the full news_articles corpus)
+- Same-symbol exclusion default 10 days (autocorrelation control)
+
+Distinct from `cohort` (the v2-era distribution primitive). `cohort_analyze`
+is the new North Star Layer 3 analyzer with rich Layer 2 metadata (market
+state, news sentiment via FinBERT, sector RS, calendar context).
+
 ## 2.0.0
 
 Major consolidation: 22 legacy tools → 8 canonical primitives.
