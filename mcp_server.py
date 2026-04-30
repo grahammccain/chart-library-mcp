@@ -500,6 +500,116 @@ async def live_search(bars: list, scale: str = "1h", top_k: int = 50, cross_time
         return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [str(e)]}})
 
 
+# ── Layer 5: continual-learning memory + cross-anchor diff ───
+
+@mcp.tool(annotations=READ_ONLY)
+async def symbol_intelligence(symbol: str, lookback_days: int = 365) -> str:
+    """Layer 5 memory — what we've learned about this symbol across prior cohort analyses.
+
+    Returns hit rate per horizon (sign of predicted median vs realized return),
+    feature reliability ranked by sign-alignment with realized returns, regime
+    exposure histogram, achieved conformal coverage, and the 10 most recent
+    observations. Status='insufficient_history' when n < 5 prior analyses.
+
+    Use this to ground recommendations: instead of treating each cohort_analyze
+    in isolation, check whether a feature has historically been reliable for
+    this ticker before leaning on it.
+
+    Args:
+        symbol: Ticker (e.g. "NVDA")
+        lookback_days: How far back to aggregate observations (default 365)
+    """
+    try:
+        result = _http_get(f"/api/v1/symbol_intelligence/{symbol.upper()}?lookback_days={lookback_days}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def similar_cohorts(symbol: str, date: str, timeframe: str = "1h", top_k: int = 8) -> str:
+    """Cohort-of-cohorts retrieval — find prior cohort_analyze results whose
+    analytical fingerprint (distribution moments + top feature importances +
+    regime onehot + score components) is closest to the given anchor's most
+    recent observation.
+
+    Second-order retrieval: V5 finds chart shapes, this finds *analyses*. Use
+    for the "this looks like the time when..." question — given a current
+    setup, what prior analyses were structurally similar, and how did those
+    play out.
+
+    Args:
+        symbol: Ticker for the seed observation
+        date: Anchor date, ISO YYYY-MM-DD
+        timeframe: One of 5m / 15m / 30m / 1h / 1d (default 1h)
+        top_k: Number of nearest analytical matches (default 8, max 50)
+    """
+    try:
+        params = f"symbol={symbol.upper()}&date={date}&timeframe={timeframe}&top_k={top_k}"
+        result = _http_get(f"/api/v1/similar_cohorts?{params}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def cohort_compare(
+    a_symbol: str, a_date: str, b_symbol: str, b_date: str,
+    a_timeframe: str = "1h", b_timeframe: str = "1h",
+    cohort_size: int = 300, horizon: int = 5,
+) -> str:
+    """Cross-anchor structural diff. Runs cohort_analyze on two anchors and
+    returns a structured comparison: distribution moments per horizon,
+    feature-importance overlap with sign-direction tagging
+    (direction_disagreement is the most actionable structural difference),
+    regime fingerprint deltas (vol_regime, macro_state, news posture,
+    narrative_change_score), and risk-profile side-by-side.
+
+    Use for the cross-symbol transfer question: "anchor A looks similar to
+    historical anchor B by retrieval — what's actually structurally different?"
+
+    Args:
+        a_symbol / a_date / a_timeframe: Anchor A (current)
+        b_symbol / b_date / b_timeframe: Anchor B (analog)
+        cohort_size: Target K nearest neighbors (default 300)
+        horizon: Forward horizon in trading days (1, 5, or 10; default 5)
+    """
+    try:
+        params = (f"a_symbol={a_symbol.upper()}&a_date={a_date}&a_timeframe={a_timeframe}"
+                  f"&b_symbol={b_symbol.upper()}&b_date={b_date}&b_timeframe={b_timeframe}"
+                  f"&cohort_size={cohort_size}&horizon={horizon}")
+        result = _http_get(f"/api/v1/cohort_compare?{params}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def discover_picks(limit: int = 20, lookback_days: int = 3, horizon: int = 5) -> str:
+    """Today's high-conviction cohorts ranked by cohort_score. Reads from
+    the daily Discover scan output (source='scan' rows in cohort_observations).
+
+    Returns up to `limit` picks, one per symbol, sorted by composite signal
+    strength (delta-from-base-rate × tightness × cohort-size × feature
+    concentration). Each pick includes the per-horizon distribution moments
+    and top features so callers can decide which to drill into with
+    cohort_analyze.
+
+    Use for daily scan queries: "what's interesting today?"
+
+    Args:
+        limit: Max picks to return (default 20, max 100)
+        lookback_days: How recent the scan must be (default 3)
+        horizon: Forward horizon to surface in distribution (1, 5, or 10)
+    """
+    try:
+        params = f"limit={limit}&lookback_days={lookback_days}&horizon={horizon}"
+        result = _http_get(f"/api/v1/discover_picks?{params}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
 # ── Feedback ─────────────────────────────────────────────────
 
 @mcp.tool(annotations=WRITE)

@@ -1,5 +1,37 @@
 # Changelog
 
+## 3.2.0
+
+Layer 5 continual-learning memory — every cohort_analyze call now compounds.
+
+### New tools
+
+- **`symbol_intelligence`** — per-symbol memory aggregated across prior
+  cohort analyses: hit rate per horizon, feature reliability ranked by
+  sign-alignment with realized returns, regime exposure histogram,
+  achieved conformal coverage, recent observations.
+- **`similar_cohorts`** — second-order retrieval. V5 finds chart shapes,
+  this finds *analyses* with similar fingerprint (distribution moments +
+  top feature importances + regime onehot + score components). Surfaces
+  the "this looks like the time when..." question.
+- **`cohort_compare`** — cross-anchor structural diff. Returns
+  distribution moments, feature-importance overlap with sign-direction
+  tagging (`direction_disagreement` is the most actionable structural
+  difference), regime fingerprint deltas, side-by-side risk profile.
+- **`discover_picks`** — daily-scan output ranked by `cohort_score`
+  (composite signal strength: delta-from-base-rate × tightness ×
+  cohort-size × feature-concentration).
+
+### Behind the scenes
+
+- Server-side `feature_importance` now auto-applies historically-learned
+  reliability weights when `n ≥ 20` observations back the (feature,
+  regime, horizon) triple. Each weighted feature carries its
+  `reliability_sign_alignment` and `reliability_n` forward.
+- `/api/v1/cohort_track_record` validates the system: current numbers
+  show a +14-19pp top-vs-bottom quintile spread on directional hit rate
+  — empirical evidence cohort_score is informative.
+
 ## 3.1.0
 
 Add `cohort_analyze` — Layer 3 cohort intelligence tool.
