@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chartlibrary-mcp"
-version = "3.2.0"
-description = "Chart Library MCP Server — intelligence layer for stock pattern agents. 16 tools across cohort retrieval (search, cohort, cohort_analyze), Layer 5 memory (symbol_intelligence, similar_cohorts, cohort_compare, discover_picks), and analysis (analyze, context, explain, portfolio, anchor_fetch, decompose, clusters, live_search). Conditional distributions, conformal bands, FinBERT news sentiment + narrative_change_score, validated 14-19pp quintile spread."
+version = "3.3.0"
+description = "Chart Library MCP Server — intelligence layer for stock pattern agents. 18 tools: cohort retrieval (search, cohort, cohort_analyze), Layer 5 memory (symbol_intelligence, similar_cohorts, cohort_compare, discover_picks), realtime News v2 (narrative_pulse, narrative_alerts), analysis (analyze, context, explain, portfolio, anchor_fetch, decompose, clusters, live_search). Combined conviction = cohort_score + news pulse boost. +19.5pp quintile spread on n=1094."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [

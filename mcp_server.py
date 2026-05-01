@@ -585,6 +585,57 @@ async def cohort_compare(
 
 
 @mcp.tool(annotations=READ_ONLY)
+async def narrative_pulse(symbol: str) -> str:
+    """News v2 — today's narrative pulse for a single symbol.
+
+    Pulse = 0.6 * (today's article count anomaly vs 30d baseline) +
+    0.4 * (sentiment tone shift vs 30d baseline). FinBERT-scored
+    realtime; refreshes within ~5 min of catalyst publish during
+    market hours.
+
+    Returns the pulse value, today's article count + scored count, average
+    sentiment, 30d baseline, and the 5 most recent articles (title,
+    sentiment, time, publisher, URL). Status field tells you if there's
+    no news today ('no_articles_today') or no 30d baseline yet
+    ('no_baseline').
+
+    Use to detect catalyst-driven setups in real time. Combines with
+    cohort_analyze for the full setup-plus-catalyst signal.
+
+    Args:
+        symbol: Ticker (e.g. "NVDA")
+    """
+    try:
+        result = _http_get(f"/api/v1/narrative_pulse/{symbol.upper()}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
+async def narrative_alerts(min_pulse: float = 0.30, limit: int = 30) -> str:
+    """News v2 — symbols with elevated narrative pulse right now.
+
+    Returns active symbols (>=2 articles today, >=1 FinBERT-scored)
+    sorted by pulse DESC. The list refreshes as articles land + get
+    scored every ~3 minutes during market hours.
+
+    Use for "what's narrative-anomalous today across the market?"
+    Click into any symbol with cohort_analyze for full intelligence.
+
+    Args:
+        min_pulse: Threshold filter, default 0.30 (above this = real anomaly)
+        limit: Max alerts to return (default 30, max 200)
+    """
+    try:
+        params = f"min_pulse={min_pulse}&limit={limit}"
+        result = _http_get(f"/api/v1/narrative_alerts?{params}")
+        return json.dumps(result, default=str, indent=2)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool(annotations=READ_ONLY)
 async def discover_picks(limit: int = 20, lookback_days: int = 3, horizon: int = 5) -> str:
     """Today's high-conviction cohorts ranked by cohort_score. Reads from
     the daily Discover scan output (source='scan' rows in cohort_observations).

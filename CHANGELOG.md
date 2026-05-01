@@ -1,5 +1,32 @@
 # Changelog
 
+## 3.3.0
+
+News v2 — realtime narrative anomaly detection exposed as agent tools.
+
+### New tools
+
+- **`narrative_pulse`** — single-symbol realtime narrative pulse.
+  Returns today's article count anomaly + sentiment tone shift vs the
+  symbol's 30d baseline, plus the 5 most recent articles (title,
+  sentiment, time, publisher, URL). Pipeline latency: ~5 min from
+  publish to scored. Use this to detect catalyst-driven setups in
+  real time and combine with `cohort_analyze` for the full
+  setup-plus-catalyst signal.
+- **`narrative_alerts`** — multi-symbol scan. Returns symbols above a
+  pulse threshold sorted DESC. Useful for "what's narrative-anomalous
+  across the market right now?"
+
+### Behind the scenes (server-side)
+
+- `cohort_analyze` response now includes `narrative_pulse`,
+  `pulse_boost`, and `combined_conviction` = `cohort_score + 0.4 *
+  pulse`, capped at 1.0. Setup signal + catalyst signal fused into a
+  single conviction. `discover_picks` re-ranks by combined.
+- News pipeline: 3-min Polygon polling, CPU FinBERT scoring inside
+  the worker container (no GPU). Phase 3 endpoint `/api/v1/narrative_alerts`
+  on prod since 2026-05-01.
+
 ## 3.2.0
 
 Layer 5 continual-learning memory — every cohort_analyze call now compounds.
