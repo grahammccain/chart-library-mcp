@@ -4,32 +4,41 @@
 [![PyPI](https://img.shields.io/pypi/v/chartlibrary-mcp)](https://pypi.org/project/chartlibrary-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Glama Score](https://img.shields.io/badge/Glama-A_A_A-brightgreen)](https://glama.ai/mcp/servers/@grahammccain/chart-library-mcp)
-[![Tools](https://img.shields.io/badge/MCP_Tools-8-orange)]()
+[![Tools](https://img.shields.io/badge/MCP_Tools-19-orange)]()
 
 **Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
 
-**Ask your AI agent "what happened the last 10 times a chart looked like this?" and get a real answer.**
+**Ask your AI agent "what did this chart do last time it looked like this?" and get a real answer — backed by a cohort of historical analogs and the calibrated distribution of what came next.**
 
-24 million pattern embeddings. 10 years of history. 15,000+ stocks. One tool call.
+25M+ pattern embeddings. 10 years of history. 19K+ stocks. One tool call.
 
 ```
-> "What does NVDA's chart look like right now?"
+> "What does NVDA's chart on 2024-08-05 1h look like historically?"
 
-Found 10 similar historical patterns for NVDA (2026-04-04, RTH timeframe):
+NVDA · 2024-08-05 · 1h — cohort of 500 historical analogs
+(485 with realized 5-day returns)
 
-  Closest match: AAPL 2023-05-12 (distance: 0.41)
+  Distribution at 5 days forward:
+    median:        −1.3%
+    p10 ·· p90:    −11.3% ·· +6.8%   (80% empirical band)
+    win rate:      44%
+    cohort_score:  0.31 (modest)
 
-  Forward returns across all 10 matches:
-    1-day:  +0.8% avg  (7/10 positive)
-    5-day:  +3.1% avg  (8/10 positive)
-    10-day: +4.7% avg  (7/10 positive)
+  Features that separated winners from losers:
+    + credit_spread_state = tight
+    + macro_state = bullish
+    + pct_off_52w_low (further off)
+    − vol_regime = low
 
-  Summary: NVDA's current consolidation near highs mirrors 10 historical
-  setups, most notably AAPL's May 2023 pre-breakout pattern. 8 of 10
-  resolved higher within a week, with a median 5-day gain of +2.8%.
+  Summary: NVDA's 1-hour pattern on 2024-08-05 has 500 historical
+  analogs. The cohort's 5-day distribution is bearish-leaning
+  (median −1.3%, win rate 44%) — the historical record does NOT
+  show this pattern typically resolving bullish. Conditioning on
+  tight credit spreads and a bullish macro state would have
+  separated the outperformers within the cohort.
 ```
 
-No hallucinated predictions. No refusals. Just factual historical data your agent can cite.
+A retrieval, not a forecast. No hallucinated predictions. No cherry-picking. Just the empirical record your agent can cite.
 
 ---
 
@@ -99,7 +108,7 @@ ChatGPT connects to MCP servers via remote HTTP endpoints. To set up:
 1. **Enable Developer Mode**: Go to ChatGPT **Settings > Apps > Advanced settings > Developer mode** (requires Pro, Plus, Business, Enterprise, or Education plan)
 2. **Create a connector**: In Settings > Connectors, click **Create** and enter:
    - **Name**: Chart Library
-   - **Description**: Historical chart pattern search engine -- 24M patterns, 10 years of data
+   - **Description**: Historical chart pattern search engine — 25M+ patterns across 19K+ stocks, 10 years of data
    - **URL**: `https://chartlibrary.io/mcp`
    - **Authentication**: No Authentication (or OAuth if using an API key)
 3. **Use in conversations**: Select "Developer mode" from the Plus menu, choose the Chart Library app, and ask questions like "What does NVDA's chart look like historically?"
