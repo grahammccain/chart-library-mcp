@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "chartlibrary-mcp"
 version = "3.4.0"
-description = "Chart Library MCP Server — historical pattern intelligence for AI agents. 20 tools spanning cohort retrieval (search, cohort, cohort_analyze), Layer 5 memory (symbol_intelligence, similar_cohorts, cohort_compare, discover_picks), realtime News v2 (narrative_pulse, narrative_alerts), single-call agent surface (get_daily_setups), analysis (analyze, context, explain, portfolio, anchor_fetch, decompose, clusters, live_search), and feedback (report_feedback). 25M+ patterns across 19K+ symbols, 10 years. Combined conviction = cohort_score + news pulse boost. Q5-Q1 directional spread +14.7pp on n=1,260 5-day cohort observations."
+description = "Chart Library MCP — historical pattern intelligence for AI agents. 20 tools: cohort retrieval (search, cohort, cohort_analyze), memory (symbol_intelligence, similar_cohorts, cohort_compare, discover_picks), realtime news (narrative_pulse, narrative_alerts), single-call brief (get_daily_setups), analysis (analyze, context, explain, portfolio, anchor_fetch, decompose, clusters, live_search), feedback. 25M+ patterns, 19K+ symbols, 10y. Q5-Q1 spread +14.7pp on n=1,260."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
