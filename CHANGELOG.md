@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.4.0
+
+Single-call agent surface — replaces the multi-call discovery dance with one tool.
+
+### New tool
+
+- **`get_daily_setups`** — top picks pre-enriched with full-cohort statistics, top-3 features, and yesterday's calibration recap, all in one response. Replaces the typical workflow of calling `discover_picks` + `cohort_analyze` × N + recap separately. Each setup includes both the original top-K nightly predictions and the full-cohort stats (n=300) so callers can spot when headline consensus diverges from broader-cohort signal. Cold response after deploy: ~30-60s while the API pre-warms; warm response: <50ms.
+
+### Why this exists
+
+Dogfood test on 2026-05-04 found that an agent assembling "tomorrow's brief" needed 5+ HTTP calls and ~118s to complete. With `get_daily_setups`, the same task is 2 calls and ~35s. 8× fewer tool uses, half the tokens.
+
+### Server-side changes (chartlibrary.io)
+
+- `/discover/picks` now filters to V5-coverage symbols. No more 422s from downstream `cohort_analyze` calls — every pick is end-to-end queryable.
+- `n_matches` field documented as top-K (default 10), not full cohort. New `cohort_compatible` field on each pick.
+- `/api/v1/agent/setups` endpoint cached 23h, pre-warmed at API startup for `(top=3, timeframe=1d)` so agents don't hit cold path.
+
 ## 3.3.0
 
 News v2 — realtime narrative anomaly detection exposed as agent tools.
