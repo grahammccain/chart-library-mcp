@@ -8,7 +8,9 @@
 
 **Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
 
-**Ask your AI agent "what did this chart do last time it looked like this?" and get a real answer — backed by a cohort of historical analogs and the calibrated distribution of what came next.**
+**Cohort intelligence engine for stock chart patterns** — give your AI agent the cohort of historical analogs, the full forward-return distribution, and the features that separated winners from losers. Calibrated, methodology-honest, no overstated confidence.
+
+📖 [What is cohort intelligence?](https://chartlibrary.io/concepts/cohort-intelligence) · 🛠️ [Full MCP setup guide](https://chartlibrary.io/guides/mcp-server-for-finance) · 🤖 [Build an AI trading agent with Claude](https://chartlibrary.io/guides/build-ai-trading-agent-claude)
 
 25M+ pattern embeddings. 10 years of history. 19K+ stocks. One tool call.
 
