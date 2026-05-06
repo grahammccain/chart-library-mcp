@@ -1,10 +1,10 @@
 # Chart Library Integration Examples
 
-Working code examples showing how to use Chart Library with popular AI agent frameworks.
+Working code examples for connecting [cohort intelligence](https://chartlibrary.io/concepts/cohort-intelligence) to popular AI agent frameworks. Each example anchors a `(symbol, date, timeframe)`, retrieves the cohort of historical analogs, and lets the agent reason over the full forward-return distribution + feature attribution.
 
 ## Prerequisites
 
-All examples require a Chart Library API key. Get one free at [chartlibrary.io/developers](https://chartlibrary.io/developers).
+All examples require a Chart Library API key. Get one free at [chartlibrary.io/developers](https://chartlibrary.io/developers). For a primer on the underlying primitive, see [What is cohort intelligence?](https://chartlibrary.io/concepts/cohort-intelligence) and the [full MCP setup guide](https://chartlibrary.io/guides/mcp-server-for-finance).
 
 ```bash
 export CHART_LIBRARY_KEY="your-api-key"
@@ -51,9 +51,21 @@ export OPENAI_API_KEY="your-openai-key"
 python crewai_agent.py
 ```
 
+### cohort_aware_trader.py — Cohort + memory loop
+
+A minimal agent that picks 3 long positions per day using cohort intelligence + a compounding lesson loop. Mirrors the architecture running publicly at [chartlibrary.io/agent-trader](https://chartlibrary.io/agent-trader). Backtested over 19 days: beat passive SPY by +1.6pp, beat the no-memory baseline by +7.5pp.
+
+```bash
+pip install chartlibrary-mcp anthropic
+export ANTHROPIC_API_KEY="your-anthropic-key"
+python cohort_aware_trader.py
+```
+
+Full walkthrough: [Build an AI trading agent with Claude](https://chartlibrary.io/guides/build-ai-trading-agent-claude).
+
 ## Available MCP Tools
 
-When connected via MCP, agents get access to 19 tools:
+When connected via MCP, agents get access to 20 tools:
 
 | Tool | Description |
 |------|-------------|
@@ -76,6 +88,8 @@ When connected via MCP, agents get access to 19 tools:
 | `get_exit_signal` | Pattern-based exit recommendations |
 | `get_risk_adjusted_picks` | Sharpe-scored daily picks |
 | `report_feedback` | Submit feedback or bug reports |
+| `get_daily_setups` | Single-call brief: top picks pre-enriched with full-cohort stats + features + recap |
+| `cohort_analyze` | Full Layer 3 cohort intelligence: distribution, attribution, regime stratification, risk profile |
 
 ## Links
 
