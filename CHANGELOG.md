@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.5.0
+
+Positioning + documentation alignment. No tool / API surface changes — drop-in upgrade from 3.4.0.
+
+### Changes
+
+- **Description rewrite**: leads with "cohort intelligence engine for stock chart patterns" to align with the new chartlibrary.io positioning. PyPI page now matches the canonical concept terminology.
+- **README rewrite**: header now says "Cohort intelligence engine" and links to three new explainer pages on chartlibrary.io:
+  - `/concepts/cohort-intelligence` — canonical definition
+  - `/guides/mcp-server-for-finance` — full setup guide with Claude Desktop + Cursor configs
+  - `/guides/build-ai-trading-agent-claude` — end-to-end agent walkthrough
+
+### Why upgrade
+
+Same tools, same API, same behavior. Upgrade so your dependency declaration matches the canonical concept naming. No breaking changes.
+
 ## 3.4.0
 
 Single-call agent surface — replaces the multi-call discovery dance with one tool.
