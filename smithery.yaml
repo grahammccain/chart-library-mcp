@@ -1,0 +1,64 @@
+# Smithery server config — https://smithery.ai
+#
+# Chart Library MCP — chart-pattern intelligence for agents.
+# 8 canonical tools backed by 25M+ embeddings, 19K+ symbols,
+# 10 years of US equity history. Output is a calibrated
+# distribution of historical analogs, not a forecast.
+
+name: chart-library
+version: 5.0.0
+description: >
+  Chart-pattern intelligence for agents. 8 canonical tools
+  (search, cohort, discover, analyze, context, narrative,
+  explain, portfolio) backed by 25M+ embeddings, 19K+ symbols,
+  10y US equity history. Calibrated distributions, not forecasts.
+
+homepage: https://chartlibrary.io
+repository: https://github.com/grahammccain/chart-library-mcp
+
+# Local stdio install path — Smithery installs from PyPI
+# (already published as `chartlibrary-mcp`) and launches the
+# `chartlibrary-mcp` console script entry point.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      CHART_LIBRARY_API_KEY:
+        type: string
+        title: API key
+        description: >
+          Free Sandbox key gives 200 calls/day on search +
+          context. Get one at https://chartlibrary.io/developers.
+          Optional — the server runs without a key but deeper
+          endpoints (cohort, narrative, explain) require auth.
+  commandFunction: |-
+    (config) => ({
+      command: "chartlibrary-mcp",
+      args: [],
+      env: {
+        CHART_LIBRARY_API_KEY: config.CHART_LIBRARY_API_KEY || ""
+      }
+    })
+
+# Tool surface — 8 canonical + 1 write + 12 deprecated wrappers.
+# Read-only tools auto-allow in safe-mode MCP clients.
+tools:
+  - name: search
+    annotation: read_only
+  - name: cohort
+    annotation: read_only
+  - name: discover
+    annotation: read_only
+  - name: analyze
+    annotation: read_only
+  - name: context
+    annotation: read_only
+  - name: narrative
+    annotation: read_only
+  - name: explain
+    annotation: read_only
+  - name: portfolio
+    annotation: read_only
+  - name: report_feedback
+    annotation: write
