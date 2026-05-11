@@ -262,6 +262,7 @@ async def cohort(
     include_risk_profile: bool = True,
     exclude_same_symbol_days: int = 10,
     include_path_stats: bool = True,
+    fields: list[str] | None = None,
 ) -> str:
     """Conditional-distribution analysis — the Chart Library core primitive.
 
@@ -313,6 +314,16 @@ async def cohort(
             calendar days of the anchor (autocorrelation control;
             default 10)
         include_path_stats: include MAE/MFE/realized-vol (basic mode)
+        fields: full-mode only — optional allowlist of top-level
+            response keys to return. None (default) = full payload.
+            Valid: outcome_distribution, feature_importance,
+            regime_stratification, risk_profile, cohort_tightness_score,
+            cohort_score, combined_conviction, pulse_boost,
+            narrative_pulse, cohort_anchors, anchor_metadata. Use to
+            slim the JSON when you only need a subset (e.g.
+            fields=["outcome_distribution"] drops 97% of bytes).
+            anchor, cohort_size_actual, elapsed_ms, warnings are
+            always returned.
     """
     try:
         if depth == "compare":
@@ -343,6 +354,8 @@ async def cohort(
                     "exclude_same_symbol_days": exclude_same_symbol_days,
                 },
             }
+            if fields is not None:
+                body["fields"] = fields
             return _ok(_http_post("/api/v1/cohort_analyze", body))
 
         # default: basic

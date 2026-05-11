@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0.1
+
+`cohort` now accepts a `fields` parameter (depth="full" only) — an allowlist of top-level response keys, mirroring the new `fields=` query param on `/api/v1/cohort_analyze`. Pass `fields=["outcome_distribution"]` to drop ~97% of the response bytes when you only need the core distribution. Always-on keys (`anchor`, `cohort_size_actual`, `elapsed_ms`, `warnings`) are returned regardless. Shipped same-day after a real evaluator asked for it during a backtest.
+
 ## 5.0.0
 
 **Major surface cleanup.** The drift problem: between v3.0 and v3.5 the tool surface grew from 8 canonical tools to 19 active + 26 deprecated = 45 total tool decorators. The Anthropic-style guidance is that tool descriptions cost tokens on every turn and overlapping tools (`cohort` vs `cohort_analyze`, `narrative_pulse` vs `narrative_alerts`) hurt tool-selection accuracy. v5 cuts the active surface back to the 8 canonical that were always supposed to be the surface, with 12 deprecated wrappers retained for v4 backward compatibility.
