@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0.2
+
+`discover(mode="daily_setups")` now accepts a `fields` parameter that pass-throughs to `/api/v1/agent/setups?fields=`. Pass `fields=["setups"]` to drop `yesterday_recap` when you only need today's picks. Same trim mechanism as `cohort(depth="full", fields=[...])`.
+
 ## 5.0.1
 
 `cohort` now accepts a `fields` parameter (depth="full" only) — an allowlist of top-level response keys, mirroring the new `fields=` query param on `/api/v1/cohort_analyze`. Pass `fields=["outcome_distribution"]` to drop ~97% of the response bytes when you only need the core distribution. Always-on keys (`anchor`, `cohort_size_actual`, `elapsed_ms`, `warnings`) are returned regardless. Shipped same-day after a real evaluator asked for it during a backtest.

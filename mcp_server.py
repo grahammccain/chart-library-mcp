@@ -385,6 +385,7 @@ async def discover(
     timeframe: str = "1d",
     date: str = "",
     min_sharpe: float = 0.3,
+    fields: list[str] | None = None,
 ) -> str:
     """What's interesting across the market today.
 
@@ -413,12 +414,17 @@ async def discover(
         timeframe: cohort timeframe (mode="daily_setups")
         date: ISO date override (mode="risk_adjusted"; default today)
         min_sharpe: minimum Sharpe threshold (mode="risk_adjusted")
+        fields: daily_setups only — optional allowlist of top-level
+            response keys. Valid: setups, yesterday_recap. as_of_date
+            and cohort_timeframe are always returned. Use to drop
+            yesterday_recap when you only need today's picks.
     """
     try:
         if mode == "daily_setups":
-            return _ok(_http_get(
-                f"/api/v1/agent/setups?top={top}&timeframe={timeframe}"
-            ))
+            qs = f"top={top}&timeframe={timeframe}"
+            if fields:
+                qs += f"&fields={','.join(fields)}"
+            return _ok(_http_get(f"/api/v1/agent/setups?{qs}"))
         if mode == "risk_adjusted":
             qs = f"min_sharpe={min_sharpe}"
             if date:
