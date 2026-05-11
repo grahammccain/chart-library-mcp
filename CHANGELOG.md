@@ -1,5 +1,40 @@
 # Changelog
 
+## 5.0.0
+
+**Major surface cleanup.** The drift problem: between v3.0 and v3.5 the tool surface grew from 8 canonical tools to 19 active + 26 deprecated = 45 total tool decorators. The Anthropic-style guidance is that tool descriptions cost tokens on every turn and overlapping tools (`cohort` vs `cohort_analyze`, `narrative_pulse` vs `narrative_alerts`) hurt tool-selection accuracy. v5 cuts the active surface back to the 8 canonical that were always supposed to be the surface, with 12 deprecated wrappers retained for v4 backward compatibility.
+
+### Breaking changes
+
+- The 26 v3-era deprecated tools (`search_charts`, `get_cohort_distribution`, `refine_cohort_with_filters`, `analyze_pattern`, `get_follow_through`, `get_pattern_summary`, `get_status`, `compare_to_peers`, `get_discover_picks`, `search_batch`, `get_market_context`, `check_ticker`, `get_portfolio_health`, `get_regime_accuracy`, `detect_anomaly`, `get_volume_profile`, `get_sector_rotation`, `get_crowding`, `get_earnings_reaction`, `get_correlation_shift`, `run_scenario`, `get_regime_win_rates`, `get_pattern_degradation`, `get_exit_signal`, `get_risk_adjusted_picks`, `explain_cohort_filters`) have been **removed**. If your code still calls them, pin `chartlibrary-mcp<5.0.0` until you migrate.
+
+### Active surface — 8 canonical tools
+
+1. `search` — entry point. `mode=` supports `text` (default), `live_bars`, `similar`.
+2. `cohort` — conditional distribution. `depth=` supports `basic`, `full` (Layer 3), `compare`.
+3. `discover` — what's interesting today. `mode=` supports `picks`, `daily_setups`, `risk_adjusted`.
+4. `analyze` — analytic metrics. `metric=` adds `decompose` and `clusters` to the existing set.
+5. `context` — situational data. `target=` now accepts dict form for anchor metadata (subsumes `anchor_fetch`).
+6. `narrative` — news intelligence. `mode=` supports `pulse`, `alerts` (subsumes `narrative_pulse`, `narrative_alerts`).
+7. `explain` — narrative + rankings (unchanged).
+8. `portfolio` — multi-holding OR per-symbol Layer 5 memory. `mode=` supports `basic`, `symbol_intel` (subsumes `symbol_intelligence`).
+
+Plus `report_feedback` (utility WRITE; unchanged).
+
+### Deprecated (still callable, will be removed in v6)
+
+`cohort_analyze`, `cohort_compare`, `decompose`, `clusters`, `live_search`, `similar_cohorts`, `symbol_intelligence`, `anchor_fetch`, `narrative_pulse`, `narrative_alerts`, `discover_picks`, `get_daily_setups`. Each forwards to the canonical tool with the appropriate parameter routing.
+
+### Why this matters
+
+- LLMs read every tool description in the system prompt on every turn. 19 tool descriptions cost ~1,900 tokens per turn; 8 cost ~800.
+- Tool-selection accuracy degrades with overlapping tools (`cohort` vs `cohort_analyze` — model picks wrong one or calls both). Composite tools with `mode=` / `depth=` parameters teach the model the parameter space once instead of N times.
+- Maintenance: 8 well-described tool docstrings are tractable to keep high quality. 45 was not.
+
+### Migration
+
+Most v4 code keeps working — the 12 v4-era tools are now deprecated wrappers. v3-era code (the 26 names listed above) needs migration; the mapping table is in the README.
+
 ## 3.5.0
 
 Positioning + documentation alignment. No tool / API surface changes — drop-in upgrade from 3.4.0.

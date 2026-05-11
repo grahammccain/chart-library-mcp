@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/chartlibrary-mcp)](https://pypi.org/project/chartlibrary-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Glama Score](https://img.shields.io/badge/Glama-A_A_A-brightgreen)](https://glama.ai/mcp/servers/@grahammccain/chart-library-mcp)
-[![Tools](https://img.shields.io/badge/MCP_Tools-19-orange)]()
+[![Tools](https://img.shields.io/badge/MCP_Tools-8_canonical-brightgreen)]()
 
 **Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
 
@@ -177,46 +177,61 @@ This endpoint supports both Streamable HTTP and SSE transports, no local install
 
 ## 8 Canonical Tools
 
-Chart Library 2.0 consolidates 22 legacy tools into 8 composable primitives. Chain them via `cohort_id` handles for sub-second refinement without re-running kNN.
+Chart Library v5 ships a clean 8-tool surface. Chain them via `cohort_id` handles for sub-second refinement without re-running kNN.
 
 | Tool | What it does |
 |------|-------------|
-| `search` | Entry point. Returns `cohort_id` + anchor + n_matches for a ticker+date. Feed the handle into `cohort`, `analyze`, or `explain` to chain. |
-| `cohort` | **The core primitive.** Conditional distribution (p10/p25/p50/p75/p90 + calibrated bands + MAE/MFE + hit rates + survivorship) for a chart pattern, filtered by regime/sector/liquidity/event. One call replaces the legacy `get_cohort_distribution`, `refine_cohort_with_filters`, `run_scenario`, and `get_regime_win_rates`. |
-| `analyze` | Analytic metrics via `metric=` enum: `anomaly`, `volume_profile`, `crowding`, `correlation_shift`, `earnings_reaction`, `pattern_degradation`, `regime_accuracy`. |
-| `context` | Situational data via `target=`: ticker metadata, market regime + sector rotation, or DB coverage stats. |
-| `explain` | Narrative + rankings via `style=` enum: `filter_ranking` (which filter shifts the distribution most), `prose` (plain-English summary), `position_guidance` (exit signals), `risk_ranking` (Sharpe-ranked picks). |
-| `portfolio` | Portfolio-level conditional distribution across holdings. Weight-averages distributions, ranks tail contributors. |
-| `anchor_fetch` | **New in 2.0.** Lightweight (symbol, date) metadata fetch — sector, market cap, point-in-time regime. Avoids full kNN when you just need context for a ticker. |
-| `report_feedback` | Report errors or suggest improvements. |
+| `search` | Entry point. Find similar historical patterns for an anchor; returns a `cohort_id` you can chain. `mode=` supports `text` (default), `live_bars` (raw OHLCV), `similar` (cohort-level neighbors). |
+| `cohort` | **The core primitive.** Conditional distribution analysis. `depth="basic"` returns kNN + outcome distribution; `depth="full"` adds Layer 3 feature importance + regime stratification + risk profile; `depth="compare"` pits two anchors side-by-side. Filters across regime / sector / liquidity / event. |
+| `discover` | What's interesting today. `mode="picks"` (cohort-ranked top picks), `mode="daily_setups"` (pre-enriched briefs in one call), `mode="risk_adjusted"` (Sharpe-ranked). |
+| `analyze` | Analytic metrics. `metric=` accepts `anomaly`, `volume_profile`, `crowding`, `correlation_shift`, `earnings_reaction`, `pattern_degradation`, `regime_accuracy`, `decompose` (slice winners vs losers), `clusters` (cohort-internal grouping). |
+| `context` | Situational data. `target=` accepts `"market"`, a ticker symbol (`"NVDA"`), `{"symbol": ..., "date": ...}` for lightweight anchor metadata, or `"system"` for DB coverage. |
+| `narrative` | News intelligence. `mode="pulse"` (single-symbol narrative-change score + FinBERT sentiment) or `mode="alerts"` (market-wide divergence anomalies). |
+| `explain` | Narrative + rankings derived from a cohort. `style=` accepts `filter_ranking` (which filter shifts the distribution most), `prose` (plain-English summary), `position_guidance` (exit signals), `risk_ranking`. |
+| `portfolio` | Multi-holding analysis OR per-symbol track record. `mode="basic"` (multi-holding weighted cohort) or `mode="symbol_intel"` (per-symbol Layer 5 memory). |
 
-These tools replace hallucinated "on average this pattern returns X%" with real conditional base rates. See the [grounded-base-rates pattern](https://chartlibrary.io/blog/how-to-build-a-stock-agent-that-doesnt-hallucinate) for the full loop.
+Plus `report_feedback` for filing errors / suggestions back to the project.
+
+These tools replace hallucinated "on average this pattern returns X%" with real conditional base rates. The full distinction — what they do and how to read responses — is documented at [/concepts/cohort-intelligence](https://chartlibrary.io/concepts/cohort-intelligence) and [/concepts/reading-a-cohort-response](https://chartlibrary.io/concepts/reading-a-cohort-response).
 
 ### Typical agent flow
 
 ```
-1. search("NVDA 2024-06-18")                          → cohort_id
-2. cohort(cohort_id=..., filters={regime:{same_vix_bucket: true}})
-                                                       → conditional distribution
+1. search(query="NVDA 2024-06-18")                    → cohort_id
+2. cohort(symbol="NVDA", date="2024-06-18", depth="full",
+          filters={"vol_regime": ["high"]})
+                                                       → Layer 3 distribution + features
 3. explain(cohort_id=..., style="filter_ranking")     → which filter matters most
-4. cohort(cohort_id=..., filters={...new filter...})  → refined distribution
+4. cohort(symbol=..., date=..., depth="full",
+          filters={...refined...})                    → re-conditioned distribution
 ```
 
-### Legacy tools (deprecated, still callable)
+### Migrating from v4 / v3 / v2
 
-For backward compatibility, these 22 legacy tool names remain in place and are marked
-`deprecated` in their MCP annotations. They forward to the canonical tool and will be
-removed in a future major release. Migrate via the mapping below:
+v5 reduces the surface from 19 active tools to 8 composite tools. Twelve previously-active tools (`cohort_analyze`, `cohort_compare`, `decompose`, `clusters`, `live_search`, `similar_cohorts`, `symbol_intelligence`, `anchor_fetch`, `narrative_pulse`, `narrative_alerts`, `discover_picks`, `get_daily_setups`) are retained as DEPRECATED wrappers that forward to the canonical tools — v4 callers keep working unchanged. New agents should reach for the 8 canonical tools.
 
-| Legacy | Replacement |
+The v3-era tools (`search_charts`, `get_cohort_distribution`, etc.) have been removed in v5. If your code still calls them, pin `chartlibrary-mcp<5.0.0` until you migrate to the canonical surface. The mapping:
+
+| Legacy (removed in v5) | Replacement |
 |--------|-------------|
-| `search_charts`, `search_batch`, `get_discover_picks` | `search` |
+| `search_charts`, `search_batch`, `get_discover_picks` | `search` / `discover` |
 | `get_cohort_distribution`, `refine_cohort_with_filters`, `run_scenario`, `get_regime_win_rates`, `compare_to_peers` | `cohort` |
-| `detect_anomaly`, `get_volume_profile`, `get_crowding`, `get_earnings_reaction`, `get_correlation_shift`, `get_pattern_degradation`, `get_regime_accuracy` | `analyze` (metric=) |
+| `detect_anomaly`, `get_volume_profile`, `get_crowding`, `get_earnings_reaction`, `get_correlation_shift`, `get_pattern_degradation`, `get_regime_accuracy` | `analyze` (`metric=`) |
 | `get_sector_rotation`, `get_status`, `get_market_context` | `context` |
-| `get_pattern_summary`, `explain_cohort_filters`, `get_exit_signal`, `get_risk_adjusted_picks` | `explain` (style=) |
+| `get_pattern_summary`, `explain_cohort_filters`, `get_exit_signal`, `get_risk_adjusted_picks` | `explain` (`style=`) |
 | `get_portfolio_health` | `portfolio` |
 | `analyze_pattern`, `get_follow_through`, `check_ticker` | `search` + `cohort` (+ optional `explain`) |
+
+| Previously active in v4 (now DEPRECATED in v5) | Replacement |
+|--------|-------------|
+| `cohort_analyze` | `cohort(depth="full")` |
+| `cohort_compare` | `cohort(depth="compare", compare_with={...})` |
+| `decompose`, `clusters` | `analyze(metric="decompose" | "clusters")` |
+| `live_search`, `similar_cohorts` | `search(mode="live_bars" | "similar")` |
+| `symbol_intelligence` | `portfolio(mode="symbol_intel")` |
+| `anchor_fetch` | `context(target={"symbol": ..., "date": ...})` |
+| `narrative_pulse`, `narrative_alerts` | `narrative(mode="pulse" | "alerts")` |
+| `discover_picks`, `get_daily_setups` | `discover(mode="picks" | "daily_setups")` |
 
 ---
 
