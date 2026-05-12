@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0.3
+
+**Bug fix — `narrative` tool was broken in production.** The tool wrapped the wrong API paths since v5.0.0: `mode="alerts"` called `/api/v1/narrative-alerts` (hyphen) but the API endpoint is `/api/v1/narrative_alerts` (underscore). `mode="pulse"` called `/api/v1/narrative_pulse?symbol={X}` (query string) but the API takes the symbol as a path parameter (`/{symbol}`). Both calls returned HTTP 404 to the agent. Other 7 canonical tools were unaffected. Upgrade if you use `narrative`.
+
 ## 5.0.2
 
 `discover(mode="daily_setups")` now accepts a `fields` parameter that pass-throughs to `/api/v1/agent/setups?fields=`. Pass `fields=["setups"]` to drop `yesterday_recap` when you only need today's picks. Same trim mechanism as `cohort(depth="full", fields=[...])`.

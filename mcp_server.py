@@ -583,13 +583,15 @@ async def narrative(
     """
     try:
         if mode == "alerts":
+            # API path uses underscore (narrative_alerts), not hyphen.
             return _ok(_http_get(
-                f"/api/v1/narrative-alerts?min_pulse={min_pulse}&limit={limit}"
+                f"/api/v1/narrative_alerts?min_pulse={min_pulse}&limit={limit}"
             ))
         # default: pulse
         if not symbol:
             return _err(ValueError("narrative pulse requires symbol"))
-        return _ok(_http_get(f"/api/v1/narrative_pulse?symbol={symbol}"))
+        # API path uses path parameter, not query string.
+        return _ok(_http_get(f"/api/v1/narrative_pulse/{symbol}"))
     except Exception as e:
         return _err(e)
 
