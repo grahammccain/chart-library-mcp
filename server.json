@@ -2,17 +2,17 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.grahammccain/chart-library",
   "title": "Chart Library — Pattern Intelligence",
-  "description": "Chart-pattern intelligence for agents. 8 canonical tools — search, cohort, discover, analyze, context, narrative, explain, portfolio — backed by 25M+ embeddings, 19K+ symbols, 10y US equity history.",
+  "description": "Chart-pattern intelligence for AI agents. 9 canonical tools — decision_brief, search, cohort, discover, analyze, context, narrative, explain, portfolio — backed by 25M+ embeddings, 19K+ symbols, 10y US equity history. decision_brief returns deterministic classification flags (verdict_class, edge_class, regime_alignment, sample_quality, conviction, swing_factors) agents paraphrase in their own voice.",
   "repository": {
     "url": "https://github.com/grahammccain/chart-library-mcp",
     "source": "github"
   },
-  "version": "5.0.0",
+  "version": "5.1.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "chartlibrary-mcp",
-      "version": "5.0.0",
+      "version": "5.1.0",
       "transport": {
         "type": "stdio"
       },

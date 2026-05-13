@@ -1,17 +1,21 @@
 # Smithery server config — https://smithery.ai
 #
 # Chart Library MCP — chart-pattern intelligence for agents.
-# 8 canonical tools backed by 25M+ embeddings, 19K+ symbols,
+# 9 canonical tools backed by 25M+ embeddings, 19K+ symbols,
 # 10 years of US equity history. Output is a calibrated
 # distribution of historical analogs, not a forecast.
 
 name: chart-library
-version: 5.0.0
+version: 5.1.0
 description: >
-  Chart-pattern intelligence for agents. 8 canonical tools
-  (search, cohort, discover, analyze, context, narrative,
-  explain, portfolio) backed by 25M+ embeddings, 19K+ symbols,
-  10y US equity history. Calibrated distributions, not forecasts.
+  Chart-pattern intelligence for AI agents. 9 canonical tools
+  (decision_brief, search, cohort, discover, analyze, context,
+  narrative, explain, portfolio) backed by 25M+ embeddings,
+  19K+ symbols, 10y US equity history. decision_brief returns
+  a summary block of deterministic classification flags
+  (verdict_class, edge_class, regime_alignment, sample_quality,
+  conviction, swing_factors) that agents paraphrase in their
+  own voice. Calibrated distributions, not forecasts.
 
 homepage: https://chartlibrary.io
 repository: https://github.com/grahammccain/chart-library-mcp
@@ -41,9 +45,14 @@ startCommand:
       }
     })
 
-# Tool surface — 8 canonical + 1 write + 12 deprecated wrappers.
+# Tool surface — 9 canonical + 1 write + 12 deprecated wrappers.
 # Read-only tools auto-allow in safe-mode MCP clients.
+# decision_brief is the recommended default first call for any
+# (symbol, date) anchor question — bundles cohort + memory + narrative
+# into a single response shaped to force conditional language.
 tools:
+  - name: decision_brief
+    annotation: read_only
   - name: search
     annotation: read_only
   - name: cohort
