@@ -746,7 +746,18 @@ async def decision_brief(
       in_current_regime             (subset matching the anchor's regime)
       outside_current_regime        (rest, weighted average)
       conditional_edge              (median_lift_pp + win_rate_lift_pp)
-      thesis_invalidation_triggers  (top features that separated winners)
+      thesis_invalidation_triggers  (top 5 features, narrative-ready with
+                                     interpretation strings — quote these
+                                     when explaining what would flip the read)
+      feature_importance            (top 20 features ranked by within-cohort
+                                     importance, compact shape — use this
+                                     when the user asks about a specific
+                                     feature or you need depth beyond the
+                                     top 5. Mirrors the full attribution
+                                     view the /intelligence UI shows.)
+      n_features_total              (count of all features computed; if
+                                     greater than 20 the rest are available
+                                     via /api/v1/cohort_analyze directly)
       memory_context                (Layer 5 prior observations)
       narrative_context             (news pulse)
       conviction                    (legacy — same as summary.conviction)
