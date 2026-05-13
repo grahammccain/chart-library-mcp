@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chartlibrary-mcp"
-version = "5.0.3"
+version = "5.0.4"
 description = "Cohort intelligence engine for stock chart patterns. Anchor any (symbol, date, timeframe) and your AI agent gets the cohort of 300 historical analogs, the full forward-return distribution, and the features that separated winners from losers. 8 composite MCP tools (search, cohort, discover, analyze, context, narrative, explain, portfolio). 25M+ patterns, 19K+ symbols, 10 years. Validated 50–0 in a blind paired AI-agent evaluation."
 readme = "README.md"
 requires-python = ">=3.10"

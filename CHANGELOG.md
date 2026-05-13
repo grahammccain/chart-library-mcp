@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.4
+
+**New `decision_brief` tool — output-first orchestrator.** One call that composes `cohort` (depth=full) + anchor context + `portfolio` (symbol_intel / Layer 5 memory) + `narrative` (pulse) into a single decision-grade response. Output schema intentionally forces *conditional* language: fields are named `in_current_regime` / `outside_current_regime` / `conditional_edge` instead of `predicted_return`. Returns a `system_prompt_excerpt` field the agent should quote verbatim rather than paraphrasing.
+
+Use `decision_brief` as the DEFAULT first call for any (symbol, date) anchor question. The 8 existing canonical tools remain for power users composing their own flow.
+
+Wraps `POST /api/v1/decision_brief`.
+
 ## 5.0.3
 
 **Bug fix — `narrative` tool was broken in production.** The tool wrapped the wrong API paths since v5.0.0: `mode="alerts"` called `/api/v1/narrative-alerts` (hyphen) but the API endpoint is `/api/v1/narrative_alerts` (underscore). `mode="pulse"` called `/api/v1/narrative_pulse?symbol={X}` (query string) but the API takes the symbol as a path parameter (`/{symbol}`). Both calls returned HTTP 404 to the agent. Other 7 canonical tools were unaffected. Upgrade if you use `narrative`.

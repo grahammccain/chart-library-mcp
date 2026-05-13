@@ -691,6 +691,68 @@ async def portfolio(
         return _err(e)
 
 
+# ── 9. decision_brief — output-first orchestrator ───────────────
+
+@mcp.tool(annotations=READ_ONLY)
+async def decision_brief(
+    symbol: str,
+    date: str,
+    timeframe: str = "1h",
+    cohort_size: int = 300,
+    horizon_days: int = 5,
+    include_memory: bool = True,
+    include_narrative: bool = True,
+) -> str:
+    """One-call decision-grade orchestrator. Use this as your DEFAULT first
+    call for any (symbol, date) anchor question.
+
+    Composes cohort_analyze (depth=full) + anchor metadata + Layer 5 memory
+    (symbol_intelligence) + narrative pulse into a single structured brief.
+    Output is shaped to FORCE CONDITIONAL language — fields are named
+    `in_current_regime` and `outside_current_regime`, not `predicted_return`.
+    The agent should quote `system_prompt_excerpt` verbatim rather than
+    paraphrasing.
+
+    Returned shape:
+      - current_regime              (the anchor's regime label)
+      - cohort_total                (all 300 analogs)
+      - in_current_regime           (subset matching the anchor's regime)
+      - outside_current_regime      (rest, weighted average)
+      - conditional_edge            (median_lift_pp + win_rate_lift_pp = the alpha read)
+      - thesis_invalidation_triggers
+      - memory_context              (Layer 5 — prior observations for this symbol)
+      - narrative_context           (news pulse)
+      - conviction                  ("low" | "medium" | "high")
+      - decision_card               (headline / primary_finding / watch / caveat)
+      - system_prompt_excerpt       (ready-to-quote conditional language)
+
+    When to use this vs the primitives:
+      - decision_brief: agents asking "what should I know about this anchor?"
+      - cohort (depth='full'): when you need full feature_importance / raw stats
+      - analyze (metric=...): single metric drill-downs
+
+    Args:
+        symbol, date, timeframe: anchor (timeframe default "1h" — current; "1d" lags ~3 days)
+        cohort_size: target K (default 300)
+        horizon_days: forward horizon for the headline read (default 5)
+        include_memory: include Layer 5 prior-observations context (default True)
+        include_narrative: include news pulse / narrative-change context (default True)
+    """
+    try:
+        body = {
+            "anchor": {"symbol": symbol, "date": date, "timeframe": timeframe},
+            "options": {
+                "cohort_size": cohort_size,
+                "horizon_days": horizon_days,
+                "include_memory": include_memory,
+                "include_narrative": include_narrative,
+            },
+        }
+        return _ok(_http_post("/api/v1/decision_brief", body))
+    except Exception as e:
+        return _err(e)
+
+
 # ── Utility: report_feedback ────────────────────────────────────
 
 @mcp.tool(annotations=WRITE)
