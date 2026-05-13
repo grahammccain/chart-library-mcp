@@ -277,9 +277,17 @@ async def cohort(
         Returns the basic outputs PLUS feature importance (which Layer 2
         features separated winners from losers within this cohort),
         regime stratification (outcomes sliced by vol/macro), risk
-        profile (drawdown / runup percentiles), and cohort tightness
-        score. Requires symbol+date+timeframe (cohort_id alone isn't
-        enough — the Layer 3 analyzer needs the full anchor).
+        profile (drawdown / runup percentiles), cohort tightness
+        score, AND a deterministic `summary` block of classification
+        flags (verdict_class, edge_class, regime_alignment,
+        sample_quality, conviction, swing_factors with framings,
+        caveat_flags). Read `summary` first — paraphrase the framings
+        in your own voice rather than narrating the raw stats; cite
+        numbers in parentheses for support. `summary` is included
+        when `include_anchor_metadata=True` (the regime classification
+        needs the anchor's metadata). Requires symbol+date+timeframe
+        (cohort_id alone isn't enough — the Layer 3 analyzer needs
+        the full anchor).
 
       depth="compare" (~400ms):
         Compare TWO anchors' cohorts side-by-side. Pass symbol+date for
@@ -708,23 +716,40 @@ async def decision_brief(
 
     Composes cohort_analyze (depth=full) + anchor metadata + Layer 5 memory
     (symbol_intelligence) + narrative pulse into a single structured brief.
-    Output is shaped to FORCE CONDITIONAL language — fields are named
-    `in_current_regime` and `outside_current_regime`, not `predicted_return`.
-    The agent should quote `system_prompt_excerpt` verbatim rather than
-    paraphrasing.
 
-    Returned shape:
-      - current_regime              (the anchor's regime label)
-      - cohort_total                (all 300 analogs)
-      - in_current_regime           (subset matching the anchor's regime)
-      - outside_current_regime      (rest, weighted average)
-      - conditional_edge            (median_lift_pp + win_rate_lift_pp = the alpha read)
-      - thesis_invalidation_triggers
-      - memory_context              (Layer 5 — prior observations for this symbol)
-      - narrative_context           (news pulse)
-      - conviction                  ("low" | "medium" | "high")
-      - decision_card               (headline / primary_finding / watch / caveat)
-      - system_prompt_excerpt       (ready-to-quote conditional language)
+    ── HOW TO TURN THIS INTO A GOOD ANSWER ──────────────────────────
+    Read `summary` first. It contains deterministic classification flags:
+
+        verdict_class:    bullish | lean_bull | coin_flip | lean_bear | bearish | broken
+        edge_class:       trivial | small | meaningful | large
+        regime_alignment: tailwind | neutral | headwind
+        sample_quality:   thin | ok | strong
+        conviction:       low | med | high
+        swing_factors:    [ { factor, direction, framing } ]
+        caveat_flags:     [ thin_in_regime_sample, regime_was_derived, ... ]
+
+    Paraphrase the `framing` strings in your OWN voice — do not quote them
+    verbatim. Cite the raw numbers in parentheses, don't enumerate every
+    structured field. Lead with the verdict, then the context, then the
+    swing factors as things to watch, then conviction.
+
+    Example (your voice may differ):
+      "Honestly, this NVDA setup is a coin flip. In-regime cohort (n=21)
+       printed +0.09% median over 5d (52% wins) — basically identical to
+       other regimes (+0.27%, 52%). Sector is lagging hard (-10.4 RS),
+       which is muting reads. Soft sample size — directional, not thesis."
+
+    ── RESPONSE STRUCTURE ───────────────────────────────────────────
+      summary                       (read this first — see above)
+      current_regime                (anchor's regime label + features)
+      cohort_total                  (all analogs, all regimes)
+      in_current_regime             (subset matching the anchor's regime)
+      outside_current_regime        (rest, weighted average)
+      conditional_edge              (median_lift_pp + win_rate_lift_pp)
+      thesis_invalidation_triggers  (top features that separated winners)
+      memory_context                (Layer 5 prior observations)
+      narrative_context             (news pulse)
+      conviction                    (legacy — same as summary.conviction)
 
     When to use this vs the primitives:
       - decision_brief: agents asking "what should I know about this anchor?"

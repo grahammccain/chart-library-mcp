@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "chart-library",
-  "version": "5.0.4",
+  "version": "5.1.0",
   "description": "Historical chart-pattern intelligence for agents. 8 canonical tools (search, cohort, discover, analyze, context, narrative, explain, portfolio) backed by 25M+ embeddings across 19K+ symbols and 10 years of US equity history. Output is a calibrated distribution of historical analogs, not a forecast.",
   "author": {
     "name": "Chart Library",

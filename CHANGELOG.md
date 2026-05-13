@@ -1,5 +1,33 @@
 # Changelog
 
+## 5.1.0
+
+**Conversation-grade outputs — agents stop sounding robotic.** `decision_brief` and `cohort` (depth=full) now return a deterministic `summary` block of classification flags. Agents read the flags first and paraphrase the framings in their own voice, instead of quoting a templated `primary_finding` or enumerating raw stats. The result is desk-style commentary that reads like a portfolio manager, not a research report.
+
+The summary shape:
+
+```
+summary = {
+  verdict_class:    bullish | lean_bull | coin_flip | lean_bear | bearish | broken,
+  edge_class:       trivial | small | meaningful | large,
+  regime_alignment: tailwind | neutral | headwind,
+  sample_quality:   thin | ok | strong,
+  conviction:       low | med | high,
+  swing_factors:    [ { factor, direction, framing } ],
+  caveat_flags:     [ thin_in_regime_sample, regime_was_derived, ... ],
+}
+```
+
+Each `swing_factors[].framing` is a short layman phrase ("vol is the limiting factor — read improves if realized vol drops to mid bucket") that the agent paraphrases. Flags are deterministic rules over the existing stats — no LLM in the loop.
+
+### Breaking changes
+
+- **`decision_brief.decision_card` and `decision_brief.system_prompt_excerpt` are removed.** Those fields were "scripts" that pushed agents into quoted, robotic prose. The new `summary` block replaces them. Existing structured fields (`current_regime`, `in_current_regime`, `outside_current_regime`, `conditional_edge`, `thesis_invalidation_triggers`, `memory_context`, `narrative_context`, `conviction`) are unchanged. If your integration relied on `decision_card.primary_finding`, switch to reading `summary.verdict_class` + `summary.swing_factors` and let your agent narrate.
+
+### Tool surface
+
+`cohort` (depth=full) gains `summary` in its response when `include_anchor_metadata=True` (default).  Pass `fields=["summary"]` to slim the payload to just the classification block — useful when chaining and you only need the verdict.
+
 ## 5.0.4
 
 **New `decision_brief` tool — output-first orchestrator.** One call that composes `cohort` (depth=full) + anchor context + `portfolio` (symbol_intel / Layer 5 memory) + `narrative` (pulse) into a single decision-grade response. Output schema intentionally forces *conditional* language: fields are named `in_current_regime` / `outside_current_regime` / `conditional_edge` instead of `predicted_return`. Returns a `system_prompt_excerpt` field the agent should quote verbatim rather than paraphrasing.
