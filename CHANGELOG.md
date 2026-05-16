@@ -1,5 +1,45 @@
 # Changelog
 
+## 5.2.0
+
+**Outcome-mode playbook on `cohort` (depth=full).** New `include_modes`
+and `n_modes` args expose the Layer B v1 mode-clustering surface — the
+cohort isn't treated as one distribution, it's split into K distinct
+"playbook" clusters by what historical analogs actually did next:
+
+```
+{
+  "modes": [
+    {
+      "mode_id": 0,
+      "label": "sharp downtrend -8.9%",
+      "n": 8,
+      "median_return": -0.112,
+      "win_rate": 0.0,
+      "std_return": 0.041,
+      "p25_return": -0.142,
+      "p75_return": -0.082,
+      "centroid_cum_returns": [0.0, -0.021, -0.044, ..., -0.089]
+    },
+    {"mode_id": 1, "label": "downtrend -2.5%", ...},
+    {"mode_id": 2, "label": "uptrend +3.9%", ...},
+    {"mode_id": 3, "label": "smooth sideways", ...}
+  ]
+}
+```
+
+Modes are sorted ASC by median_return (mode_id=0 = worst realized
+cluster). Use for "playbook" framing: instead of agents reporting
+"median return +1.2%", they can describe the distinct paths the
+cohort took ("most analogs drifted sideways, but 8 of 300 collapsed
+sharply").
+
+Algorithmic labels are derived from centroid slope (direction) +
+within-mode bar-to-bar volatility (smoothness) + final-return
+magnitude — no LLM in the loop, deterministic across reruns.
+
+`include_modes` defaults to False — default response shape is unchanged.
+
 ## 5.1.0
 
 **Conversation-grade outputs — agents stop sounding robotic.** `decision_brief` and `cohort` (depth=full) now return a deterministic `summary` block of classification flags. Agents read the flags first and paraphrase the framings in their own voice, instead of quoting a templated `primary_finding` or enumerating raw stats. The result is desk-style commentary that reads like a portfolio manager, not a research report.

@@ -260,6 +260,8 @@ async def cohort(
     include_feature_importance: bool = True,
     include_regime_stratification: bool = True,
     include_risk_profile: bool = True,
+    include_modes: bool = False,
+    n_modes: int = 4,
     exclude_same_symbol_days: int = 10,
     include_path_stats: bool = True,
     fields: list[str] | None = None,
@@ -318,6 +320,17 @@ async def cohort(
         compare_with: secondary anchor for depth="compare"
         include_feature_importance, include_regime_stratification,
             include_risk_profile: full-mode toggles
+        include_modes: full-mode only — when True, returns a `modes`
+            array clustering the cohort into K outcome playbooks (e.g.
+            "smooth uptrend +4.2%", "sharp downtrend -8.1%"). Each
+            entry has mode_id, label, n, median_return, win_rate,
+            std_return, p25/p75_return, and centroid_cum_returns
+            (sparkline-ready trajectory). Sorted ASC by median_return
+            so mode_id=0 is the worst realized cluster. Use for
+            "playbook" framing — the cohort isn't one outcome, it's
+            K distinct historical paths.
+        n_modes: number of modes to cluster into (2-6, default 4).
+            Adaptive: degrades to fewer modes if cohort_size is small.
         exclude_same_symbol_days: drop same-symbol analogs within N
             calendar days of the anchor (autocorrelation control;
             default 10)
@@ -359,6 +372,8 @@ async def cohort(
                     "include_feature_importance": include_feature_importance,
                     "include_regime_stratification": include_regime_stratification,
                     "include_risk_profile": include_risk_profile,
+                    "include_modes": include_modes,
+                    "n_modes": n_modes,
                     "exclude_same_symbol_days": exclude_same_symbol_days,
                 },
             }

@@ -6,7 +6,7 @@
 # distribution of historical analogs, not a forecast.
 
 name: chart-library
-version: 5.1.0
+version: 5.2.0
 description: >
   Chart-pattern intelligence for AI agents. 9 canonical tools
   (decision_brief, search, cohort, discover, analyze, context,
