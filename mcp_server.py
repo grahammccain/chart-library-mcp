@@ -74,7 +74,7 @@ log = logging.getLogger("mcp_server")
 
 _API_KEY = os.getenv("CHART_LIBRARY_API_KEY")
 _API_BASE = os.getenv("CHART_LIBRARY_API_URL", "https://chartlibrary.io")
-_MCP_USER_AGENT = "chartlibrary-mcp/5.0.0"
+_MCP_USER_AGENT = "chartlibrary-mcp/5.3.0"
 
 
 # ── Tool annotations ────────────────────────────────────────────
@@ -187,7 +187,7 @@ def _ok(data: dict) -> str:
 
 # ── 1. search ───────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Search Historical Patterns", annotations=READ_ONLY)
 async def search(
     query: str = "",
     symbol: str = "",
@@ -245,7 +245,7 @@ async def search(
 
 # ── 2. cohort ───────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Cohort Intelligence", annotations=READ_ONLY)
 async def cohort(
     symbol: str = "",
     date: str = "",
@@ -398,7 +398,7 @@ async def cohort(
 
 # ── 3. discover ─────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Discover Setups", annotations=READ_ONLY)
 async def discover(
     mode: str = "picks",
     limit: int = 20,
@@ -464,7 +464,7 @@ async def discover(
 
 # ── 4. analyze ──────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Analytic Metrics", annotations=READ_ONLY)
 async def analyze(
     metric: str,
     cohort_id: str = "",
@@ -550,7 +550,7 @@ async def analyze(
 
 # ── 5. context ──────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Market & Symbol Context", annotations=READ_ONLY)
 async def context(target: Any = "market") -> str:
     """Situational data about a target.
 
@@ -575,7 +575,7 @@ async def context(target: Any = "market") -> str:
 
 # ── 6. narrative ────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="News Intelligence", annotations=READ_ONLY)
 async def narrative(
     mode: str = "pulse",
     symbol: str = "",
@@ -621,7 +621,7 @@ async def narrative(
 
 # ── 7. explain ──────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Explain Cohort", annotations=READ_ONLY)
 async def explain(
     cohort_id: str,
     style: str = "filter_ranking",
@@ -657,7 +657,7 @@ async def explain(
 
 # ── 8. portfolio ────────────────────────────────────────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Portfolio Analysis", annotations=READ_ONLY)
 async def portfolio(
     holdings: list | None = None,
     symbol: str = "",
@@ -716,7 +716,7 @@ async def portfolio(
 
 # ── 9. decision_brief — output-first orchestrator ───────────────
 
-@mcp.tool(annotations=READ_ONLY)
+@mcp.tool(title="Decision Brief", annotations=READ_ONLY)
 async def decision_brief(
     symbol: str,
     date: str,
@@ -806,7 +806,7 @@ async def decision_brief(
 
 # ── Utility: report_feedback ────────────────────────────────────
 
-@mcp.tool(annotations=WRITE)
+@mcp.tool(title="Report Feedback", annotations=WRITE)
 async def report_feedback(
     message: str,
     endpoint: str = "",
@@ -846,7 +846,7 @@ async def report_feedback(
 # tools will skip these; v4 callers using them directly still work.
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Cohort Analyze (deprecated → use cohort(depth='full'))", annotations=DEPRECATED_READ_ONLY)
 async def cohort_analyze(
     symbol: str,
     date: str,
@@ -874,7 +874,7 @@ async def cohort_analyze(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Cohort Compare (deprecated → use cohort(depth='compare'))", annotations=DEPRECATED_READ_ONLY)
 async def cohort_compare(
     symbol_a: str,
     date_a: str,
@@ -894,7 +894,7 @@ async def cohort_compare(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Decompose Cohort (deprecated → use analyze(metric='decompose'))", annotations=DEPRECATED_READ_ONLY)
 async def decompose(
     cohort_id: str,
     horizon: int = 10,
@@ -908,7 +908,7 @@ async def decompose(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Cluster Cohort (deprecated → use analyze(metric='clusters'))", annotations=DEPRECATED_READ_ONLY)
 async def clusters(
     cohort_id: str,
     horizon: int = 10,
@@ -920,7 +920,7 @@ async def clusters(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Live Bar Search (deprecated → use search(mode='live_bars'))", annotations=DEPRECATED_READ_ONLY)
 async def live_search(
     bars: list,
     scale: str = "1h",
@@ -934,7 +934,7 @@ async def live_search(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Similar Cohorts (deprecated → use search(mode='similar'))", annotations=DEPRECATED_READ_ONLY)
 async def similar_cohorts(
     symbol: str,
     date: str,
@@ -948,7 +948,7 @@ async def similar_cohorts(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Symbol Intelligence (deprecated → use portfolio(mode='symbol_intel'))", annotations=DEPRECATED_READ_ONLY)
 async def symbol_intelligence(
     symbol: str,
     lookback_days: int = 365,
@@ -959,7 +959,7 @@ async def symbol_intelligence(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Anchor Metadata (deprecated → use context(target={symbol,date}))", annotations=DEPRECATED_READ_ONLY)
 async def anchor_fetch(symbol: str, date: str | None = None) -> str:
     """[DEPRECATED in v5 — use context(target={"symbol": ..., "date": ...})]"""
     if date:
@@ -967,13 +967,13 @@ async def anchor_fetch(symbol: str, date: str | None = None) -> str:
     return await context(target=symbol)
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Narrative Pulse (deprecated → use narrative(mode='pulse'))", annotations=DEPRECATED_READ_ONLY)
 async def narrative_pulse(symbol: str) -> str:
     """[DEPRECATED in v5 — use narrative(mode="pulse", symbol=...)]"""
     return await narrative(mode="pulse", symbol=symbol)
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Narrative Alerts (deprecated → use narrative(mode='alerts'))", annotations=DEPRECATED_READ_ONLY)
 async def narrative_alerts(
     min_pulse: float = 0.30,
     limit: int = 30,
@@ -982,7 +982,7 @@ async def narrative_alerts(
     return await narrative(mode="alerts", min_pulse=min_pulse, limit=limit)
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Discover Picks (deprecated → use discover(mode='picks'))", annotations=DEPRECATED_READ_ONLY)
 async def discover_picks(
     limit: int = 20,
     lookback_days: int = 3,
@@ -995,7 +995,7 @@ async def discover_picks(
     )
 
 
-@mcp.tool(annotations=DEPRECATED_READ_ONLY)
+@mcp.tool(title="Daily Setups (deprecated → use discover(mode='daily_setups'))", annotations=DEPRECATED_READ_ONLY)
 async def get_daily_setups(
     top: int = 3,
     timeframe: str = "1d",

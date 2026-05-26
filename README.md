@@ -52,7 +52,7 @@ pip install chartlibrary-mcp
 ```
 
 ### Claude Desktop (One-Click Install)
-Download the [chart-library-1.1.1.mcpb](https://github.com/grahammccain/chart-library-mcp/raw/master/chart-library-1.1.1.mcpb) extension file and open it with Claude Desktop for automatic installation.
+Download the [chart-library-5.3.0.mcpb](https://github.com/grahammccain/chart-library-mcp/raw/master/chart-library-5.3.0.mcpb) extension file and open it with Claude Desktop for automatic installation.
 
 ### Claude Code
 ```bash
@@ -273,6 +273,39 @@ export CHART_LIBRARY_API_KEY=cl_your_key
 - [Developer Portal](https://chartlibrary.io/developers)
 - [Regime Tracker](https://chartlibrary.io/regime)
 - [Python SDK](https://pypi.org/project/chartlibrary/) | [JavaScript SDK](https://www.npmjs.com/package/chartlibrary)
+
+---
+
+## Privacy Policy
+
+Chart Library's privacy policy is published at [chartlibrary.io/privacy](https://chartlibrary.io/privacy) and covers:
+
+- **What we collect**: account info (email when you create an account), usage data (search queries, features used), and device information (browser, OS, IP). API queries are stored for service operation and analytics.
+- **How we use it**: providing and improving the service, processing your searches, communicating about your account, and analyzing usage patterns.
+- **Data sharing**: we do not sell personal data. Operational service providers (hosting, analytics, payment processing) receive only what's necessary to provide the service.
+- **Third-party services**: queries may be processed by upstream providers (Polygon.io for market data, Anthropic for narrative summaries) under their own privacy policies.
+- **Retention**: account info while your account is active; usage data is anonymized or deleted periodically. You can request deletion at any time.
+- **Security**: encryption in transit and at rest. No method of transmission is 100% secure.
+- **California rights (CCPA)**: right to know, right to delete, right to opt-out, non-discrimination.
+- **Contact**: support@chartlibrary.io for any privacy inquiry.
+
+The MCP server itself sends only the arguments of your tool calls to `chartlibrary.io` (no local file or directory contents, no clipboard, no browser history). Your `CHART_LIBRARY_API_KEY` is sent only as a Bearer header to authenticate with the chart-library API.
+
+---
+
+## Security
+
+- **Transport**: all calls to the remote API are HTTPS (TLS 1.2+).
+- **Authentication**: optional API key passed as a Bearer header; the free Sandbox tier requires no key.
+- **No write access** to your environment, files, or other accounts. The single MCP tool that performs a write (`report_feedback`) only writes back to chart-library's own feedback inbox and never touches your system.
+
+Report security issues to support@chartlibrary.io.
+
+---
+
+## License
+
+MIT. See [LICENSE](LICENSE).
 
 ---
 
