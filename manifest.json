@@ -29,20 +29,26 @@
     "type": "git",
     "url": "https://github.com/grahammccain/chart-library-mcp"
   },
-  "keywords": ["chart patterns", "stock analysis", "trading", "market intelligence", "AI agent", "financial data", "cohort intelligence", "base rates"],
-  "privacy_policies": [
-    {
-      "url": "https://chartlibrary.io/privacy"
-    }
+  "keywords": [
+    "chart patterns",
+    "stock analysis",
+    "trading",
+    "market intelligence",
+    "AI agent",
+    "financial data",
+    "cohort intelligence",
+    "base rates"
   ],
-  "user_config": [
-    {
+  "privacy_policies": [
+    "https://chartlibrary.io/privacy"
+  ],
+  "user_config": {
+    "CHART_LIBRARY_API_KEY": {
       "type": "string",
-      "name": "CHART_LIBRARY_API_KEY",
       "title": "Chart Library API Key",
       "description": "Optional. Free Sandbox tier (search, context, follow-through, status) works without a key. Layer 3 tools (cohort_analyze, cohort_introspect, symbol_intelligence, narrative_pulse, discover_picks) require a Builder tier key — get one free at https://chartlibrary.io/developers.",
       "sensitive": true,
       "required": false
     }
-  ]
+  }
 }
