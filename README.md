@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Glama Score](https://img.shields.io/badge/Glama-A_A_A-brightgreen)](https://glama.ai/mcp/servers/@grahammccain/chart-library-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-1f6feb)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.grahammccain/chart-library)
-[![Tools](https://img.shields.io/badge/MCP_Tools-8_canonical-brightgreen)]()
+[![Tools](https://img.shields.io/badge/MCP_Tools-9_canonical-brightgreen)]()
 
 **Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
 
@@ -52,7 +52,7 @@ pip install chartlibrary-mcp
 ```
 
 ### Claude Desktop (One-Click Install)
-Download the [chart-library-5.3.0.mcpb](https://github.com/grahammccain/chart-library-mcp/raw/master/chart-library-5.3.0.mcpb) extension file and open it with Claude Desktop for automatic installation.
+Download the [chart-library-6.0.0.mcpb](https://github.com/grahammccain/chart-library-mcp/raw/master/chart-library-6.0.0.mcpb) extension file and open it with Claude Desktop for automatic installation.
 
 ### Claude Code
 ```bash
@@ -134,64 +134,66 @@ This endpoint supports both Streamable HTTP and SSE transports, no local install
 ### "Should I be worried about my TSLA position?"
 
 ```
-> get_exit_signal("TSLA")
+> search(query="TSLA")                              → cohort_id
+> explain(cohort_id=..., style="position_guidance")
 
-  Signal: HOLD (confidence: 72%)
-  Similar patterns that exited early: 3/10 would have avoided a drawdown
-  Similar patterns that held: 7/10 gained an additional +2.1% over 5 days
-  Recommendation: Pattern suggests continuation. No exit signal triggered.
+  Signal: HOLD
+  Of the historical analogs to this setup, those that exited early
+  avoided a drawdown 3/10 of the time; those that held gained a
+  further +2.1% median over the next 5 days. No exit signal triggered
+  — the cohort's record leans toward continuation, not reversal.
 ```
 
 ### "What sectors are rotating in right now?"
 
 ```
-> get_sector_rotation()
+> context(target="market")
 
-  Leaders (30-day relative strength):
-    1. XLK  Technology     +4.2%
-    2. XLY  Cons. Disc.    +3.1%
-    3. XLC  Communication  +2.8%
+  Sector relative strength (30-day):
+    Leaders:  XLK Technology +4.2% · XLY Cons. Disc. +3.1% · XLC Comm. +2.8%
+    Laggards: XLU Utilities −1.4% · XLP Cons. Staples −2.1% · XLRE Real Estate −3.3%
 
-  Laggards:
-    9. XLU  Utilities      -1.4%
-   10. XLP  Cons. Staples  -2.1%
-   11. XLRE Real Estate    -3.3%
-
-  Regime: Risk-On (growth > defensives)
+  Regime: Risk-On (growth > defensives), SPY above 20d, VIX mid-band.
 ```
 
-### "What happens to AMD if SPY drops 3%?"
+### "How does AMD behave when the broad tape is weak?"
 
 ```
-> run_scenario("AMD", spy_change=-3.0)
+> search(query="AMD 2024-06-18")                    → cohort_id
+> cohort_groupby(cohort_id=..., by="ctx_spy_trend_20d")
 
-  When SPY fell ~3%, AMD historically:
-    Median move:  -5.2%
-    Best case:    +1.1%
-    Worst case:  -11.4%
-    Positive:     18% of the time
+  AMD's cohort, split by the SPY trend at each analog's date:
+    SPY weak (bottom quartile):  median 5d −5.2%  ·  p10/p90 −11.4%/+1.1%  ·  18% positive
+    SPY strong (top quartile):   median 5d +2.6%  ·  p10/p90 −3.1%/+8.4%   ·  61% positive
 
-  AMD shows 1.7x beta to SPY downside moves.
+  A distribution conditioned on the tape — historical analogs, not a beta forecast.
 ```
 
 ---
 
-## 8 Canonical Tools
+## 9 Canonical Tools
 
-Chart Library v5 ships a clean 8-tool surface. Chain them via `cohort_id` handles for sub-second refinement without re-running kNN.
+Chart Library v6 exposes the same granular surface as the remote server at `chartlibrary.io/mcp` — so the pip package, the Claude connector, and the REST API all use the same tool names. The core loop is **search → cohort_analyze → cohort_introspect**. Chain tools via `cohort_id` handles for sub-second refinement without re-running kNN.
 
 | Tool | What it does |
 |------|-------------|
 | `search` | Entry point. Find similar historical patterns for an anchor; returns a `cohort_id` you can chain. `mode=` supports `text` (default), `live_bars` (raw OHLCV), `similar` (cohort-level neighbors). |
-| `cohort` | **The core primitive.** Conditional distribution analysis. `depth="basic"` returns kNN + outcome distribution; `depth="full"` adds Layer 3 feature importance + regime stratification + risk profile; `depth="compare"` pits two anchors side-by-side. Filters across regime / sector / liquidity / event. |
-| `discover` | What's interesting today. `mode="picks"` (cohort-ranked top picks), `mode="daily_setups"` (pre-enriched briefs in one call), `mode="risk_adjusted"` (Sharpe-ranked). |
+| `cohort_analyze` | **The core primitive.** Layer 3 cohort intelligence for a `(symbol, date, timeframe)` anchor — calibrated outcome distribution + feature importance (which features separated winners from losers) + regime stratification + risk profile. Filters across regime / sector / liquidity / event. |
+| `cohort_introspect` | Slice/probe a stored `cohort_id` by ANY attribute (macro · technical · event) and get per-subset stats vs the full-cohort baseline. No kNN re-run. *"Of the 300 analogs, how do the post-earnings-week ones do?"* |
+| `symbol_intelligence` | Layer 5 memory — per-symbol feature reliability + achieved calibration across prior analyses. Ground a read in whether a feature has historically been reliable for this ticker. |
 | `analyze` | Analytic metrics. `metric=` accepts `anomaly`, `volume_profile`, `crowding`, `correlation_shift`, `earnings_reaction`, `pattern_degradation`, `regime_accuracy`, `decompose` (slice winners vs losers), `clusters` (cohort-internal grouping). |
 | `context` | Situational data. `target=` accepts `"market"`, a ticker symbol (`"NVDA"`), `{"symbol": ..., "date": ...}` for lightweight anchor metadata, or `"system"` for DB coverage. |
-| `narrative` | News intelligence. `mode="pulse"` (single-symbol narrative-change score + FinBERT sentiment) or `mode="alerts"` (market-wide divergence anomalies). |
 | `explain` | Narrative + rankings derived from a cohort. `style=` accepts `filter_ranking` (which filter shifts the distribution most), `prose` (plain-English summary), `position_guidance` (exit signals), `risk_ranking`. |
-| `portfolio` | Multi-holding analysis OR per-symbol track record. `mode="basic"` (multi-holding weighted cohort) or `mode="symbol_intel"` (per-symbol Layer 5 memory). |
+| `portfolio` | Multi-holding weighted conditional distribution. Runs per-holding cohorts in parallel, weight-averages the distributions, ranks tail contributors. |
+| `report_feedback` | File an error or improvement suggestion back to the project. |
 
-Plus `report_feedback` for filing errors / suggestions back to the project.
+**Full-cohort handover** — hand the raw cohort back so you can bucket/sort by *your* objective, not our default lens:
+
+| Tool | What it does |
+|------|-------------|
+| `cohort_members` | The full cohort, one record per analog, with rich per-member metadata (forward outcomes, regime, anchor fundamentals, news, chart events). Slice and bucket it yourself. |
+| `cohort_groupby` | Partition the cohort by one dimension (`vol_regime`, `sector_etf`, `momentum_5d`, …) → per-bucket outcome distributions vs baseline. The one-call "does this dimension matter?" primitive. |
+| `cohort_rerank` | Reorder the cohort by a weighted composite of member fields you name (e.g. `"ret_5d:1,distance:-0.5"`) — impose your objective on the analogs, fully auditable. |
 
 These tools replace hallucinated "on average this pattern returns X%" with real conditional base rates. The full distinction — what they do and how to read responses — is documented at [/concepts/cohort-intelligence](https://chartlibrary.io/concepts/cohort-intelligence) and [/concepts/reading-a-cohort-response](https://chartlibrary.io/concepts/reading-a-cohort-response).
 
@@ -199,40 +201,41 @@ These tools replace hallucinated "on average this pattern returns X%" with real 
 
 ```
 1. search(query="NVDA 2024-06-18")                    → cohort_id
-2. cohort(symbol="NVDA", date="2024-06-18", depth="full",
-          filters={"vol_regime": ["high"]})
+2. cohort_analyze(symbol="NVDA", date="2024-06-18",
+                  filters={"vol_regime": ["high"]})
                                                        → Layer 3 distribution + features
-3. explain(cohort_id=..., style="filter_ranking")     → which filter matters most
-4. cohort(symbol=..., date=..., depth="full",
-          filters={...refined...})                    → re-conditioned distribution
+3. cohort_introspect(cohort_id=...,
+                     where={"events.days_since_earnings": {"max": 5}})
+                                                       → how the post-earnings subset did
+4. cohort_groupby(cohort_id=..., by="sector_etf")     → outcome split by sector
 ```
 
-### Migrating from v4 / v3 / v2
+### Migrating from v5 (umbrella) / v4 / v3
 
-v5 reduces the surface from 19 active tools to 8 composite tools. Twelve previously-active tools (`cohort_analyze`, `cohort_compare`, `decompose`, `clusters`, `live_search`, `similar_cohorts`, `symbol_intelligence`, `anchor_fetch`, `narrative_pulse`, `narrative_alerts`, `discover_picks`, `get_daily_setups`) are retained as DEPRECATED wrappers that forward to the canonical tools — v4 callers keep working unchanged. New agents should reach for the 8 canonical tools.
+v6 converges on the granular naming the live remote/connector surface already used. The v5 **umbrella** tools — `cohort` (`depth=`), `discover` (`mode=`), `narrative` (`mode=`), and `decision_brief` — are now **deprecated but still callable**, so existing code keeps working. `cohort(depth="full")` forwards to `cohort_analyze`. New agents should reach for the 9 canonical tools above.
 
-The v3-era tools (`search_charts`, `get_cohort_distribution`, etc.) have been removed in v5. If your code still calls them, pin `chartlibrary-mcp<5.0.0` until you migrate to the canonical surface. The mapping:
+| v5 umbrella call (deprecated) | v6 canonical |
+|--------|-------------|
+| `cohort(depth="full", ...)` | `cohort_analyze(...)` |
+| `cohort(depth="basic", cohort_id=...)` then slice | `cohort_introspect(cohort_id=..., where={...})` |
+| `cohort(depth="compare", compare_with={...})` | `cohort_compare(...)` *(still callable)* |
+| `portfolio(mode="symbol_intel", symbol=...)` | `symbol_intelligence(symbol=...)` |
+| `discover(mode="picks" | "daily_setups")` | `discover_picks(...)` / `/api/v1/agent/setups` |
+| `narrative(mode="pulse" | "alerts")` | `narrative_pulse(...)` / `narrative_alerts(...)` *(still callable)* |
+
+The v4-era granular aliases (`cohort_compare`, `decompose`, `clusters`, `live_search`, `similar_cohorts`, `anchor_fetch`, `narrative_pulse`, `narrative_alerts`, `discover_picks`, `get_daily_setups`) remain deprecated-but-callable and forward to the canonical surface.
+
+The v3-era tools (`search_charts`, `get_cohort_distribution`, `analyze_pattern`, etc.) were removed in v5. If your code still calls them, pin `chartlibrary-mcp<5.0.0` until you migrate. The mapping:
 
 | Legacy (removed in v5) | Replacement |
 |--------|-------------|
-| `search_charts`, `search_batch`, `get_discover_picks` | `search` / `discover` |
-| `get_cohort_distribution`, `refine_cohort_with_filters`, `run_scenario`, `get_regime_win_rates`, `compare_to_peers` | `cohort` |
+| `search_charts`, `search_batch`, `get_discover_picks` | `search` |
+| `get_cohort_distribution`, `refine_cohort_with_filters`, `run_scenario`, `get_regime_win_rates`, `compare_to_peers` | `cohort_analyze` (+ `cohort_introspect` to refine) |
 | `detect_anomaly`, `get_volume_profile`, `get_crowding`, `get_earnings_reaction`, `get_correlation_shift`, `get_pattern_degradation`, `get_regime_accuracy` | `analyze` (`metric=`) |
 | `get_sector_rotation`, `get_status`, `get_market_context` | `context` |
 | `get_pattern_summary`, `explain_cohort_filters`, `get_exit_signal`, `get_risk_adjusted_picks` | `explain` (`style=`) |
 | `get_portfolio_health` | `portfolio` |
-| `analyze_pattern`, `get_follow_through`, `check_ticker` | `search` + `cohort` (+ optional `explain`) |
-
-| Previously active in v4 (now DEPRECATED in v5) | Replacement |
-|--------|-------------|
-| `cohort_analyze` | `cohort(depth="full")` |
-| `cohort_compare` | `cohort(depth="compare", compare_with={...})` |
-| `decompose`, `clusters` | `analyze(metric="decompose" | "clusters")` |
-| `live_search`, `similar_cohorts` | `search(mode="live_bars" | "similar")` |
-| `symbol_intelligence` | `portfolio(mode="symbol_intel")` |
-| `anchor_fetch` | `context(target={"symbol": ..., "date": ...})` |
-| `narrative_pulse`, `narrative_alerts` | `narrative(mode="pulse" | "alerts")` |
-| `discover_picks`, `get_daily_setups` | `discover(mode="picks" | "daily_setups")` |
+| `analyze_pattern`, `get_follow_through`, `check_ticker` | `search` + `cohort_analyze` |
 
 ---
 
@@ -240,11 +243,11 @@ The v3-era tools (`search_charts`, `get_cohort_distribution`, etc.) have been re
 
 Chart Library indexes a large library of historical chart patterns and exposes them behind a conditional-distribution API. Every query returns sample sizes, percentiles, and calibrated forward-return bands — never a point forecast.
 
-When your agent calls `analyze_pattern("NVDA")`, the server:
-1. Builds a representation of NVDA's current chart state
-2. Retrieves historically similar patterns
+When your agent calls `search("NVDA")` and chains `cohort_analyze`, the server:
+1. Resolves NVDA's current chart state to a stored embedding
+2. Retrieves the cohort of historically similar patterns
 3. Looks up what happened over the following 1, 3, 5, and 10 days
-4. Returns the distribution + a plain-English summary via Claude Haiku
+4. Returns the calibrated distribution + a plain-English summary via Claude Haiku
 
 The result: factual, citation-ready statements like *"out of N similar historical patterns, the median 5-day return was X% (80% band [p10, p90])"* that your agent can present without hallucinating or hedging.
 

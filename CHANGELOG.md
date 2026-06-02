@@ -1,5 +1,49 @@
 # Changelog
 
+## 6.0.0
+
+**Converged on the remote granular canonical surface.** The pip package, the
+Claude connector, and the REST API now advertise the same tool names. The
+canonical surface is **9 tools** — the same ones the deployed remote server at
+`chartlibrary.io/mcp` exposes:
+
+```
+search · cohort_analyze · cohort_introspect · symbol_intelligence ·
+analyze · context · explain · portfolio · report_feedback
+```
+
+plus a full-cohort **handover surface** for bucketing/sorting the raw cohort by
+your own objective:
+
+```
+cohort_members · cohort_groupby · cohort_rerank
+```
+
+The core loop is **search → cohort_analyze → cohort_introspect**.
+
+**What changed for callers:**
+
+- `cohort_analyze`, `cohort_introspect`, `symbol_intelligence` are now
+  first-class canonical tools (previously `cohort_analyze` /
+  `symbol_intelligence` were deprecated wrappers and `cohort_introspect` was
+  remote-only).
+- The v5 **umbrella** tools — `cohort` (depth=), `discover` (mode=),
+  `narrative` (mode=), and `decision_brief` — are **demoted to
+  deprecated-but-callable**. Nothing breaks: existing code calling
+  `cohort(depth="full")`, `discover(mode="picks")`, etc. keeps working, but new
+  agents are steered to the granular names. `cohort(depth="full")` now forwards
+  to `cohort_analyze`.
+- All v4-era granular aliases (`cohort_compare`, `decompose`, `clusters`,
+  `live_search`, `similar_cohorts`, `anchor_fetch`, `narrative_pulse`,
+  `narrative_alerts`, `discover_picks`, `get_daily_setups`) remain
+  deprecated-but-callable.
+
+**Why:** the package and the website guides had drifted onto the umbrella API
+(`cohort(depth=...)`) while the live remote/connector surface was already
+granular — so tutorial code mis-taught connector users. This release makes one
+naming family the standard everywhere. News still never drives direction;
+FinBERT sentiment enters only as a structural divergence/change signal.
+
 ## 5.2.0
 
 **Outcome-mode playbook on `cohort` (depth=full).** New `include_modes`
