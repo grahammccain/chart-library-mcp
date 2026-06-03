@@ -212,7 +212,7 @@ These tools replace hallucinated "on average this pattern returns X%" with real 
 
 ### Migrating from v5 (umbrella) / v4 / v3
 
-v6 converges on the granular naming the live remote/connector surface already used. The v5 **umbrella** tools — `cohort` (`depth=`), `discover` (`mode=`), `narrative` (`mode=`), and `decision_brief` — are now **deprecated but still callable**, so existing code keeps working. `cohort(depth="full")` forwards to `cohort_analyze`. New agents should reach for the 9 canonical tools above.
+v6 converges on the granular naming the live remote/connector surface already used. The v5 **umbrella** tools — `cohort` (`depth=`), `discover` (`mode=`), `narrative` (`mode=`), and `decision_brief` — are now **deprecated but still callable**, so existing code keeps working. `cohort(depth="full")` forwards to `cohort_analyze`. New agents should reach for the canonical tools above.
 
 | v5 umbrella call (deprecated) | v6 canonical |
 |--------|-------------|

@@ -1,5 +1,24 @@
 # Changelog
 
+## 6.0.1
+
+**Deprecated aliases are now hidden from `tools/list` (still callable).** The
+advertised surface is now exactly the canonical tools — `search`,
+`cohort_analyze`, `cohort_introspect`, `symbol_intelligence`, `analyze`,
+`context`, `explain`, `portfolio`, `report_feedback`, `track_record`, plus the
+handover surface `cohort_members` · `cohort_groupby` · `cohort_rerank`. The v5
+umbrella tools (`cohort`, `discover`, `narrative`, `decision_brief`) and the
+v4-era granular aliases (`cohort_compare`, `decompose`, `clusters`,
+`live_search`, `similar_cohorts`, `anchor_fetch`, `narrative_pulse`,
+`narrative_alerts`, `discover_picks`, `get_daily_setups`) stay **registered and
+callable by name** — only their advertisement on `tools/list` is suppressed.
+
+**Why:** agents reliably ignore tools past ~7–9 in a selection menu, so
+advertising the deprecated aliases diluted selection of the canonical
+primitives. Hiding rather than deleting is an announced sunset: any existing
+connector/OAuth client still calling a legacy name by hand keeps working. This
+matches the surface deployed at `chartlibrary.io/mcp`.
+
 ## 6.0.0
 
 **Converged on the remote granular canonical surface.** The pip package, the

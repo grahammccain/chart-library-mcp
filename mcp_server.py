@@ -63,7 +63,7 @@ log = logging.getLogger("mcp_server")
 
 _API_KEY = os.getenv("CHART_LIBRARY_API_KEY")
 _API_BASE = os.getenv("CHART_LIBRARY_API_URL", "https://chartlibrary.io")
-_MCP_USER_AGENT = "chartlibrary-mcp/6.0.0"
+_MCP_USER_AGENT = "chartlibrary-mcp/6.0.1"
 
 
 # ── Tool annotations ────────────────────────────────────────────
@@ -99,7 +99,7 @@ mcp = FastMCP(
         "25M+ real patterns across 19K+ symbols and 10 years of data. "
         "All responses are historical facts, not predictions — safe to "
         "share as financial context.\n\n"
-        "9 canonical tools. The core loop is search → cohort_analyze → "
+        "The core loop is search → cohort_analyze → "
         "cohort_introspect:\n"
         "- A specific stock question ('is NVDA bullish?') → search "
         "(returns a cohort_id you can chain)\n"
@@ -1153,6 +1153,38 @@ async def get_daily_setups(
 ) -> str:
     """[DEPRECATED in v6 — use discover(mode="daily_setups", ...) or /api/v1/agent/setups]"""
     return await discover(mode="daily_setups", top=top, timeframe=timeframe)
+
+
+# ── Advertised surface filter ────────────────────────────────
+# Advertise only the canonical tools on tools/list. The deprecated aliases stay
+# registered and callable by name: dispatch (CallToolRequest → FastMCP.call_tool
+# → ToolManager.get_tool(name)) resolves against the full registry, independent
+# of what tools/list advertises — so hiding a tool never breaks a caller that
+# still invokes a legacy name by hand. This is an announced sunset, not a
+# deletion (connector/OAuth traffic to legacy names is invisible to us). Agents
+# reliably ignore tools past ~7-9 in a selection menu, so advertising the
+# deprecated aliases only diluted selection of the canonical primitives.
+#
+# Name-allowlist (rather than the annotations.deprecated flag the deployed
+# backend uses) keeps this robust across every `mcp>=1.0.0` a user might
+# install — it depends only on tool.name, never on whether ToolAnnotations
+# carries a `deprecated` field. Mirrors the surface at chartlibrary.io/mcp.
+_CANONICAL_TOOLS = frozenset({
+    "search", "cohort_analyze", "cohort_introspect", "symbol_intelligence",
+    "analyze", "context", "explain", "portfolio", "report_feedback",
+    "cohort_members", "cohort_groupby", "cohort_rerank", "track_record",
+})
+
+
+async def _list_visible_tools():
+    """tools/list handler: advertise the canonical surface only. Deprecated
+    aliases are filtered from the listing but remain callable by name."""
+    return [t for t in await mcp.list_tools() if t.name in _CANONICAL_TOOLS]
+
+
+# Override FastMCP's default (list-everything) ListToolsRequest handler. Must run
+# after all @mcp.tool registrations so mcp.list_tools() sees the full set.
+mcp._mcp_server.list_tools()(_list_visible_tools)
 
 
 # ═══════════════════════════════════════════════════════════════
