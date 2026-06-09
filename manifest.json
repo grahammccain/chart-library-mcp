@@ -2,8 +2,8 @@
   "manifest_version": "0.2",
   "name": "chart-library",
   "display_name": "Chart Library",
-  "version": "6.0.1",
-  "description": "Historical chart-pattern intelligence for agents. 10 canonical tools (search, cohort_analyze, cohort_introspect, symbol_intelligence, analyze, context, explain, portfolio, report_feedback, track_record) plus a full-cohort handover surface (cohort_members, cohort_groupby, cohort_rerank), backed by 25M+ embeddings across 19K+ symbols and 10 years of US equity history. The core loop is search → cohort_analyze → cohort_introspect. Output is a calibrated distribution of historical analogs, not a forecast.",
+  "version": "6.1.0",
+  "description": "Historical chart-pattern intelligence for agents. Flagship tool pull_comps pulls the comp set for a subject (symbol, date, timeframe); 14 canonical tools in all (search, pull_comps, cohort_introspect, symbol_intelligence, cohort_members, cohort_groupby, cohort_rerank, cohort_attribution, track_record, analyze, context, explain, portfolio, report_feedback), backed by 25M+ embeddings across 19K+ symbols and 10 years of US equity history. The core loop is search → pull_comps → cohort_introspect. Output is a calibrated distribution of historical analogs, not a forecast.",
   "long_description": "Chart Library is the empirical memory of markets — anchor any (symbol, date, timeframe) and your AI agent gets the cohort of 300+ historical analogs, the full forward-return distribution (p10/p25/p50/p75/p90 with conformal-calibrated bands), MAE/MFE risk profile, and the features that separated winners from losers. Designed for grounded financial reasoning: every response is a fact about what historically happened, not a forecast. The 80% empirical band has held 80.8% across 303,556 cases; calibration is the moat, not pattern detection.\n\nUse cases: pre-trade base rate check, regime-conditioned scenario analysis, position sizing from historical risk profile, portfolio-level cohort exposure, news-driven narrative pulse, daily setup discovery.",
   "author": {
     "name": "Chart Library",
@@ -46,7 +46,7 @@
     "CHART_LIBRARY_API_KEY": {
       "type": "string",
       "title": "Chart Library API Key",
-      "description": "Optional. Free Sandbox tier (search, context, follow-through, status) works without a key. Layer 3 tools (cohort_analyze, cohort_introspect, symbol_intelligence, narrative_pulse, discover_picks) require a Builder tier key — get one free at https://chartlibrary.io/developers.",
+      "description": "Optional. Free Sandbox tier (search, context, follow-through, status) works without a key. Layer 3 tools (pull_comps, cohort_analyze, cohort_introspect, symbol_intelligence, cohort_members, cohort_groupby, cohort_rerank, cohort_attribution) require a Builder tier key — get one free at https://chartlibrary.io/developers.",
       "sensitive": true,
       "required": false
     }

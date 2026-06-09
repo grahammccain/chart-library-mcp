@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chartlibrary-mcp"
-version = "6.0.1"
-description = "Cohort intelligence engine for stock chart patterns. Anchor any (symbol, date, timeframe) and your AI agent gets the cohort of historical analogs, the full calibrated forward-return distribution, and the features that separated winners from losers. 10 canonical MCP tools plus a full-cohort handover surface; the core loop is search → cohort_analyze → cohort_introspect. 25M+ patterns, 19K+ symbols, 10 years. Validated 50–0 in a blind paired AI-agent evaluation."
+version = "6.1.0"
+description = "Cohort intelligence engine for stock chart patterns. Anchor any (symbol, date, timeframe) and your AI agent gets the comp set of historical analogs, the full calibrated forward-return distribution, and the drivers that separated winners from losers. Flagship tool pull_comps plus 14 canonical tools and a full-cohort handover surface; the core loop is search → pull_comps → cohort_introspect. 25M+ patterns, 19K+ symbols, 10 years. Validated 50–0 in a blind paired AI-agent evaluation."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -32,4 +32,4 @@ Repository = "https://github.com/grahammccain/chart-library-mcp"
 chartlibrary-mcp = "mcp_server:main"
 
 [tool.setuptools]
-py-modules = ["mcp_server"]
+py-modules = ["mcp_server", "lexicon"]

@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Glama Score](https://img.shields.io/badge/Glama-A_A_A-brightgreen)](https://glama.ai/mcp/servers/@grahammccain/chart-library-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-listed-1f6feb)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.grahammccain/chart-library)
-[![Tools](https://img.shields.io/badge/MCP_Tools-9_canonical-brightgreen)]()
+[![Tools](https://img.shields.io/badge/MCP_Tools-14_canonical-brightgreen)]()
 
 **Works with:** Claude Desktop | Claude Code | ChatGPT | GitHub Copilot | Cursor | VS Code | Any MCP client
 
@@ -52,7 +52,7 @@ pip install chartlibrary-mcp
 ```
 
 ### Claude Desktop (One-Click Install)
-Download the [chart-library-6.0.0.mcpb](https://github.com/grahammccain/chart-library-mcp/raw/master/chart-library-6.0.0.mcpb) extension file and open it with Claude Desktop for automatic installation.
+Download the [chart-library-6.1.0.mcpb](https://github.com/grahammccain/chart-library-mcp/raw/master/chart-library-6.1.0.mcpb) extension file and open it with Claude Desktop for automatic installation.
 
 ### Claude Code
 ```bash
@@ -171,15 +171,18 @@ This endpoint supports both Streamable HTTP and SSE transports, no local install
 
 ---
 
-## 9 Canonical Tools
+## 14 Canonical Tools
 
-Chart Library v6 exposes the same granular surface as the remote server at `chartlibrary.io/mcp` — so the pip package, the Claude connector, and the REST API all use the same tool names. The core loop is **search → cohort_analyze → cohort_introspect**. Chain tools via `cohort_id` handles for sub-second refinement without re-running kNN.
+Chart Library v6 exposes the same granular surface as the remote server at `chartlibrary.io/mcp` — so the pip package, the Claude connector, and the REST API all use the same tool names. The core loop is **search → pull_comps → cohort_introspect**. Chain tools via the `comp_set_id` / `cohort_id` handle for sub-second refinement without re-running kNN.
 
 | Tool | What it does |
 |------|-------------|
-| `search` | Entry point. Find similar historical patterns for an anchor; returns a `cohort_id` you can chain. `mode=` supports `text` (default), `live_bars` (raw OHLCV), `similar` (cohort-level neighbors). |
-| `cohort_analyze` | **The core primitive.** Layer 3 cohort intelligence for a `(symbol, date, timeframe)` anchor — calibrated outcome distribution + feature importance (which features separated winners from losers) + regime stratification + risk profile. Filters across regime / sector / liquidity / event. |
-| `cohort_introspect` | Slice/probe a stored `cohort_id` by ANY attribute (macro · technical · event) and get per-subset stats vs the full-cohort baseline. No kNN re-run. *"Of the 300 analogs, how do the post-earnings-week ones do?"* |
+| `search` | Entry point. Find similar historical patterns for an anchor; returns a comp-set handle you can chain. `mode=` supports `text` (default), `live_bars` (raw OHLCV), `similar` (cohort-level neighbors). |
+| `pull_comps` | **The flagship.** Pull the *comp set* for a subject `(symbol, date, timeframe)` — the historical analogs, what they did next, the **drivers** that separated the best outcomes, and our **coverage_record**. Front-of-house lexicon: `subject` · `comp_set_id` · `comp_count` · `comp_strength` · `match_quality` · `drivers` · `up_rate` · `conditions` (calm / normal / stressed). Same engine as `cohort_analyze` with the new vocabulary applied at the boundary. |
+| `cohort_analyze` | Same engine as `pull_comps` under the **original field names** (`cohort_id`, `feature_importance`, `win_rate`, `vol_regime`, …). Kept callable verbatim for existing integrations; new ones should prefer `pull_comps`. |
+| `cohort_introspect` | Slice/probe a stored comp set by ANY attribute (macro · technical · event) and get per-subset stats vs the full-cohort baseline. No kNN re-run. *"Of the 300 analogs, how do the post-earnings-week ones do?"* |
+| `cohort_attribution` | Within-cohort winner/loser attribution — which member traits separated the forward-return tail from the rest, each with a by-date cluster-bootstrap CI and a false-discovery decision. Descriptive, never causal. |
+| `track_record` | Historical predicted-vs-realized coverage of our calibrated bands (a track record, not a forecast). The nominal 80% band held 80.8% across 302,880 prior cases. |
 | `symbol_intelligence` | Layer 5 memory — per-symbol feature reliability + achieved calibration across prior analyses. Ground a read in whether a feature has historically been reliable for this ticker. |
 | `analyze` | Analytic metrics. `metric=` accepts `anomaly`, `volume_profile`, `crowding`, `correlation_shift`, `earnings_reaction`, `pattern_degradation`, `regime_accuracy`, `decompose` (slice winners vs losers), `clusters` (cohort-internal grouping). |
 | `context` | Situational data. `target=` accepts `"market"`, a ticker symbol (`"NVDA"`), `{"symbol": ..., "date": ...}` for lightweight anchor metadata, or `"system"` for DB coverage. |
@@ -200,10 +203,10 @@ These tools replace hallucinated "on average this pattern returns X%" with real 
 ### Typical agent flow
 
 ```
-1. search(query="NVDA 2024-06-18")                    → cohort_id
-2. cohort_analyze(symbol="NVDA", date="2024-06-18",
-                  filters={"vol_regime": ["high"]})
-                                                       → Layer 3 distribution + features
+1. search(query="NVDA 2024-06-18")                    → comp_set_id
+2. pull_comps(symbol="NVDA", date="2024-06-18",
+              filters={"vol_regime": ["high"]})
+                                                       → comp set: distribution + drivers
 3. cohort_introspect(cohort_id=...,
                      where={"events.days_since_earnings": {"max": 5}})
                                                        → how the post-earnings subset did

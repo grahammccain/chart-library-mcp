@@ -7,12 +7,12 @@
     "url": "https://github.com/grahammccain/chart-library-mcp",
     "source": "github"
   },
-  "version": "6.0.1",
+  "version": "6.1.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "chartlibrary-mcp",
-      "version": "6.0.1",
+      "version": "6.1.0",
       "transport": {
         "type": "stdio"
       },

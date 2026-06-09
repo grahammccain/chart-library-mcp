@@ -1,5 +1,35 @@
 # Changelog
 
+## 6.1.0
+
+**New flagship tool `pull_comps` + full surface sync with the deployed remote
+server.** `pull_comps` pulls the *comp set* for a subject `(symbol, date,
+timeframe)` — the historical analogs, what they did next, the **drivers** that
+separated the best outcomes, and our **coverage_record** — under the
+institutional front-of-house lexicon: `subject` · `comp_set_id` · `comp_count`
+· `comp_strength` · `match_quality` · `drivers` · `coverage_record` · `up_rate`
+· `conditions` (calm / normal / stressed). It's the same engine as
+`cohort_analyze` with the new vocabulary applied at the response boundary only
+(via a vendored `lexicon.py` remap) — **storage, params, and internal field
+names are untouched**.
+
+The canonical loop is now **search → pull_comps → cohort_introspect**.
+
+**Nothing breaks for existing callers.** `cohort_analyze` keeps its original
+field-name contract verbatim and stays callable — it's just hidden from
+`tools/list` (Wave 2.5 discovery-tier deprecation) so fresh connector sessions
+land on the single flagship instead of competing between two tools that return
+different field names. All other legacy aliases (`cohort`, `market_briefing`,
+`anchor_fetch`, `similar_cohorts`, `cohort_compare`, `narrative_pulse`,
+`narrative_alerts`, `discover_picks`) remain registered and callable by name.
+
+The advertised canonical surface is **14 tools**: `search`, `pull_comps`,
+`cohort_introspect`, `symbol_intelligence`, `cohort_members`, `cohort_groupby`,
+`cohort_rerank`, `cohort_attribution`, `track_record`, `analyze`, `context`,
+`explain`, `portfolio`, `report_feedback`. This matches the surface deployed at
+`chartlibrary.io/mcp`. News still never drives direction; FinBERT sentiment
+enters only as a structural divergence/change signal.
+
 ## 6.0.1
 
 **Deprecated aliases are now hidden from `tools/list` (still callable).** The
