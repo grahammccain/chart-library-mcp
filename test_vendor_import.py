@@ -52,6 +52,7 @@ def test_release_surfaces_have_matching_versions_and_public_tools():
     registry = json.loads((root / "server.json").read_text())
     smithery = (root / "smithery.yaml").read_text()
     assert manifest["version"] == registry["version"] == version
+    assert registry["remotes"] == [{"type": "streamable-http", "url": "https://chartlibrary.io/mcp"}]
     assert all(package["version"] == version for package in registry["packages"])
     assert re.search(r'^version: (.+)$', smithery, re.M).group(1) == version
     assert re.findall(r'^  - name: (.+)$', smithery, re.M) == ["market_state", "daily_note", "research_quality"]
