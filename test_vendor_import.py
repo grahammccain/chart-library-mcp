@@ -2,6 +2,8 @@
 import asyncio
 import json
 import os
+from pathlib import Path
+import re
 from unittest.mock import Mock
 
 os.environ.pop("CHART_LIBRARY_API_KEY", None)
@@ -41,3 +43,18 @@ def test_lexicon_vendored_import_resolves():
     assert out["comp_set_id"] == "abc"
     assert out["up_rate"] == 0.6
     assert out["conditions"] == "stressed"
+
+
+def test_release_surfaces_have_matching_versions_and_public_tools():
+    root = Path(__file__).parent
+    version = re.search(r'^version = "([^"]+)"', (root / "pyproject.toml").read_text(), re.M).group(1)
+    manifest = json.loads((root / "manifest.json").read_text())
+    registry = json.loads((root / "server.json").read_text())
+    smithery = (root / "smithery.yaml").read_text()
+    assert manifest["version"] == registry["version"] == version
+    assert all(package["version"] == version for package in registry["packages"])
+    assert re.search(r'^version: (.+)$', smithery, re.M).group(1) == version
+    assert re.findall(r'^  - name: (.+)$', smithery, re.M) == ["market_state", "daily_note", "research_quality"]
+    requirements = (root / "requirements.txt").read_text().splitlines()
+    assert "mcp>=1.28.1,<2.0.0" in requirements
+    assert "python-dotenv>=1.0.0" in requirements

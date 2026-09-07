@@ -1,30 +1,18 @@
-# Smithery server config — https://smithery.ai
-#
-# Chart Library MCP — chart-pattern intelligence for agents.
-# 14 canonical tools backed by 25M+ embeddings, 19K+ symbols,
-# 10 years of US equity history. Output is a calibrated
-# distribution of historical analogs, not a forecast.
-
+# Chart Library MCP: the same three-tool public menu as the hosted service.
 name: chart-library
-version: 6.1.0
+version: 6.2.0
 description: >
-  Chart-pattern intelligence for AI agents. Flagship tool pull_comps
-  pulls the comp set for a subject (symbol, date, timeframe); 14
-  canonical tools in all (search, pull_comps, cohort_introspect,
-  symbol_intelligence, cohort_members, cohort_groupby, cohort_rerank,
-  cohort_attribution, track_record, analyze, context, explain,
-  portfolio, report_feedback) backed by 25M+ embeddings, 19K+ symbols,
-  10y US equity history. The core loop is search → pull_comps →
-  cohort_introspect: anchor a (symbol, date, timeframe), get the comp
-  set of historical analogs, then slice it. Calibrated distributions,
-  not forecasts.
+  Free market-state research through three independent read-only tools:
+  market_state, daily_note, and research_quality. Read completed-session
+  states and historical analog ranges, published daily research, or the
+  dated calibration receipt. No API key or preliminary search is needed.
+  Historical observations are not automatically calibrated forecasts.
+  For custom integrations, contact graham@chartlibrary.io.
 
 homepage: https://chartlibrary.io
 repository: https://github.com/grahammccain/chart-library-mcp
 
-# Local stdio install path — Smithery installs from PyPI
-# (already published as `chartlibrary-mcp`) and launches the
-# `chartlibrary-mcp` console script entry point.
+# Install chartlibrary-mcp from PyPI, then launch its console entry point.
 startCommand:
   type: stdio
   configSchema:
@@ -34,11 +22,8 @@ startCommand:
         type: string
         title: API key
         description: >
-          Free Sandbox key gives 200 calls/day on search +
-          context. Get one at https://chartlibrary.io/developers.
-          Optional — the server runs without a key but deeper
-          tools (cohort_analyze, cohort_introspect, explain)
-          require auth.
+          Optional. Public research works without a key.
+          Service limits and underlying data terms still apply.
   commandFunction: |-
     (config) => ({
       command: "chartlibrary-mcp",
@@ -48,39 +33,12 @@ startCommand:
       }
     })
 
-# Tool surface — flagship pull_comps + the canonical-14. cohort_analyze
-# is the same engine under the original field names (kept callable but
-# hidden from tools/list so pull_comps is the one discoverable flagship);
-# deprecated umbrella wrappers (cohort, market_briefing, anchor_fetch,
-# narrative_*, discover_picks) stay callable but are not advertised here.
-# Read-only tools auto-allow in safe-mode MCP clients. The core loop is
-# search → pull_comps → cohort_introspect for any (symbol, date) anchor.
+# Existing tool names remain callable. The advanced local profile changes
+# discovery only; it does not grant access to private research.
 tools:
-  - name: search
+  - name: market_state
     annotation: read_only
-  - name: pull_comps
+  - name: daily_note
     annotation: read_only
-  - name: cohort_introspect
+  - name: research_quality
     annotation: read_only
-  - name: symbol_intelligence
-    annotation: read_only
-  - name: cohort_members
-    annotation: read_only
-  - name: cohort_groupby
-    annotation: read_only
-  - name: cohort_rerank
-    annotation: read_only
-  - name: cohort_attribution
-    annotation: read_only
-  - name: track_record
-    annotation: read_only
-  - name: analyze
-    annotation: read_only
-  - name: context
-    annotation: read_only
-  - name: explain
-    annotation: read_only
-  - name: portfolio
-    annotation: read_only
-  - name: report_feedback
-    annotation: write

@@ -3,9 +3,8 @@
 
 Free market-state research. One question, one call.
 
-**6.2.0 release candidate — not yet published.** The hosted service and PyPI
-release will be aligned in a separate deployment/release. The published 6.1.0
-client still has the older menu; use this checkout to test the new client.
+Version 6.2.0 introduces the same three-tool starting point as the hosted
+service. Existing integrations retain their callable tool names.
 
 ## Three read-only tools
 
@@ -26,13 +25,12 @@ Dates use YYYY-MM-DD. Missing or thin evidence stays missing or thin.
 ## Connect
 
 The primary remote endpoint is **https://chartlibrary.io/mcp**, using
-Streamable HTTP and no authentication. The hosted menu changes at deployment;
-it may still advertise the older tools while this release is pending.
+Streamable HTTP and no authentication.
 
-For a command-based client, test this release from the checkout:
+For a command-based client, install or upgrade the package:
 
 ```sh
-python -m pip install .
+python -m pip install --upgrade chartlibrary-mcp
 ```
 
 Then use the equivalent of this configuration in your MCP client:
