@@ -1,24 +1,24 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.grahammccain/chart-library",
-  "title": "Chart Library — Pattern Intelligence",
-  "description": "Historical chart-pattern intelligence for AI agents. 25M+ embeddings, 19K+ symbols, 10y history.",
+  "title": "Chart Library — Market-state research",
+  "description": "Free market-state research: historical analogs, daily notes and calibration evidence.",
   "repository": {
     "url": "https://github.com/grahammccain/chart-library-mcp",
     "source": "github"
   },
-  "version": "6.1.0",
+  "version": "6.2.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "chartlibrary-mcp",
-      "version": "6.1.0",
+      "version": "6.2.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
-          "description": "Chart Library API key (get free at chartlibrary.io/developers)",
+          "description": "Optional API key. Public research works without authentication; service limits apply.",
           "isRequired": false,
           "format": "string",
           "isSecret": true,

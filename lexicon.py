@@ -1,4 +1,4 @@
-"""lexicon — vendored copy synced from services/lexicon.py (the front-of-house rename, applied at the boundary ONLY).
+"""lexicon — the front-of-house rename, applied at the boundary ONLY.
 
 The 2026-06-09 naming rethink locked an institutional lexicon (Comp Set /
 The Subject / Coverage Record / Drivers / comp_strength / Conditions). The
@@ -33,6 +33,12 @@ KEY_MAP: dict[str, str] = {
     "cohort_tightness": "match_quality",
     "feature_importance": "drivers",
     "calibration": "coverage_record",
+    # Effective-n disclosure (memory_at_scale_v1 §1.5): the coverage_record must surface the
+    # honest sample size — distinct trading days and the design-effect-deflated effective_n —
+    # alongside the raw row count, never a coverage number stripped of its independence.
+    "calibration_n": "n_cases",
+    "calibration_n_dates": "n_distinct_dates",
+    "calibration_effective_n": "n_effective",
     "win_rate": "up_rate",
     "trimmed_mean": "typical",
     "vol_regime": "conditions",
@@ -75,10 +81,22 @@ def to_front_of_house(payload: Any) -> Any:
 
 
 def subject_to_anchor(kwargs: dict) -> dict:
-    """Accept new-vocabulary inputs on the new surface; map to internals."""
+    """Accept new-vocabulary inputs on the new surface; map to internals.
+
+    The response renames cohort_size_actual -> comp_count, so a client that reads
+    comp_count and sends it back must be understood: until 2026-09-02 it was silently
+    ignored (Pydantic dropped the unknown key) and the request fell back to the default
+    cohort_size of 500 — the same anchor froze 500 comps through pull_comps and 300
+    through cohort_analyze. Field-allowlist entries in front-of-house vocabulary
+    (e.g. fields=["comp_members"]) are mapped back to internals for the same reason."""
     out = dict(kwargs)
     if "subject" in out and "anchor" not in out:
         out["anchor"] = out.pop("subject")
     if "comp_set_id" in out and "cohort_id" not in out:
         out["cohort_id"] = out.pop("comp_set_id")
+    if "comp_count" in out and "cohort_size" not in out:
+        out["cohort_size"] = out.pop("comp_count")
+    fields = out.get("fields")
+    if isinstance(fields, list):
+        out["fields"] = [INPUT_KEY_MAP.get(f, f) if isinstance(f, str) else f for f in fields]
     return out

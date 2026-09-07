@@ -1,40 +1,43 @@
-"""Vendored-package import smoke test.
-
-The pip package (`chartlibrary-mcp`) ships a FLAT layout: mcp_server.py +
-lexicon.py at the wheel root, with NO db/ or services/ packages. This test
-proves the vendored mcp_server imports clean in that layout (all db.*/services.*
-imports are call-time inside functions, gated on the direct-mode path that an
-API key bypasses), that the canonical flagship + core tools are registered, and
-that the lexicon fallback (`from lexicon import to_front_of_house`) resolves.
-"""
+"""Flat-wheel smoke: no API key, services/ or db/ required."""
+import asyncio
+import json
 import os
+from unittest.mock import Mock
 
-# Force HTTP mode (the package's real-world config) before importing the server,
-# so module import never reaches a direct-mode db/services import path.
-os.environ.setdefault("CHART_LIBRARY_API_KEY", "dummy")
+os.environ.pop("CHART_LIBRARY_API_KEY", None)
+os.environ.pop("CHART_LIBRARY_MCP_PROFILE", None)
 
-import mcp_server  # noqa: E402
-
-
-def _tool_names():
-    return [t.name for t in mcp_server.mcp._tool_manager.list_tools()]
+import mcp_server
 
 
-def test_flagship_and_core_tools_registered():
-    names = _tool_names()
-    assert "pull_comps" in names, names
-    assert "cohort_analyze" in names, names
-    # A few more of the canonical surface to be safe.
-    for expected in ("search", "cohort_introspect", "track_record", "report_feedback"):
-        assert expected in names, (expected, names)
+def test_package_is_anonymous_http_by_default():
+    assert mcp_server._use_http()
+    assert not mcp_server._API_KEY
+
+
+def test_public_menu_has_three_tools():
+    names = [t.name for t in asyncio.run(mcp_server._list_visible_tools())]
+    assert names == ["market_state", "daily_note", "research_quality"]
+
+
+def test_legacy_names_stay_registered():
+    names = {t.name for t in mcp_server.mcp._tool_manager.list_tools()}
+    for expected in ("pull_comps", "cohort_analyze", "search", "cohort_introspect", "track_record", "state_packet"):
+        assert expected in names
+
+
+def test_keyless_tool_uses_http_not_server_imports(monkeypatch):
+    read = Mock(return_value={"status": "ok", "data": {"symbol": "AAPL"}})
+    monkeypatch.setattr(mcp_server, "_http_get", read)
+    result = json.loads(asyncio.run(mcp_server.market_state("AAPL")))
+    assert result["status"] == "ok"
+    assert read.call_count == 1
+    assert read.call_args.args[0] == "/api/v1/state-packet?symbol=AAPL"
 
 
 def test_lexicon_vendored_import_resolves():
-    # The pull_comps tool does `from lexicon import to_front_of_house` in the
-    # flat/vendored layout. Prove that flat import works here.
     from lexicon import to_front_of_house
     out = to_front_of_house({"cohort_id": "abc", "win_rate": 0.6, "vol_regime": "high"})
     assert out["comp_set_id"] == "abc"
     assert out["up_rate"] == 0.6
-    # vol_regime key is remapped to "conditions" AND its value display-mapped.
     assert out["conditions"] == "stressed"

@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.2.0 — Unreleased
+
+- Three independent public tools: market_state, daily_note, research_quality.
+- Previous tools remain registered; CHART_LIBRARY_MCP_PROFILE=advanced restores the extended menu.
+- Anonymous installed clients use HTTP without importing server-only packages or sending Bearer None.
+- Pin the supported MCP 1.x SDK and declare python-dotenv explicitly.
+- Align discovery, setup instructions and historical-evidence qualifications with the hosted API.
+- No PyPI, MCP Registry or desktop-bundle release has been made for this candidate.
+
 ## 6.1.0
 
 **New flagship tool `pull_comps` + full surface sync with the deployed remote
