@@ -1,9 +1,9 @@
-# Chart Library MCP: the same three-tool public menu as the hosted service.
+# Chart Library MCP: the same five-tool public menu as the hosted service.
 name: chart-library
-version: 6.2.0
+version: 6.3.0
 description: >
-  Free market-state research through three independent read-only tools:
-  market_state, daily_note, and research_quality. Read completed-session
+  Free market-state research through five read-only tools:
+  market_state, daily_note, research_quality, search_research and read_research. Read completed-session
   states and historical analog ranges, published daily research, or the
   dated calibration receipt. No API key or preliminary search is needed.
   Historical observations are not automatically calibrated forecasts.
@@ -41,4 +41,8 @@ tools:
   - name: daily_note
     annotation: read_only
   - name: research_quality
+    annotation: read_only
+  - name: search_research
+    annotation: read_only
+  - name: read_research
     annotation: read_only

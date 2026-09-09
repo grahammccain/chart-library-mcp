@@ -2,9 +2,9 @@
   "manifest_version": "0.2",
   "name": "chart-library",
   "display_name": "Chart Library",
-  "version": "6.2.0",
-  "description": "Free market-state research through three read-only tools: market_state, daily_note, and research_quality.",
-  "long_description": "Read a completed-session market state, historical analogs and outcome ranges in one call. Or read the published daily research and its settled-note tally, or the dated calibration receipt. No API key is required to try. Historical excess ranges are empirical observations, not automatically calibrated forecasts; calibration applies only to the method and population named in the receipt. Existing advanced tool names remain callable. For custom integrations, contact graham@chartlibrary.io.",
+  "version": "6.3.0",
+  "description": "Free market-state research through five read-only tools: market_state, daily_note, research_quality, search_research and read_research.",
+  "long_description": "Read completed-session market states and historical analogs, find relevant published studies, and retrieve their findings, dates, sample receipts, limitations and exact source documents. Daily notes and calibration have their own tools. No API key is required. Preserve source versions and unknowns. Proposed agent protocols are not results. Existing advanced tool names remain callable.",
   "author": {
     "name": "Chart Library",
     "email": "graham@chartlibrary.io",

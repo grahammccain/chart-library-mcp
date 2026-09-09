@@ -1,20 +1,23 @@
 # Chart Library MCP
 <!-- mcp-name: io.github.grahammccain/chart-library -->
 
-Free market-state research. One question, one call.
+Market memory for AI, with published research for agents and people.
 
-Version 6.2.0 introduces the same three-tool starting point as the hosted
-service. Existing integrations retain their callable tool names.
+Version 6.3.0 adds published-research search and source-document reading to the hosted
+service and installed client. Existing integrations retain their callable tool names.
 
-## Three read-only tools
+## Five read-only tools
 
 | Tool | Input | Result |
 | --- | --- | --- |
 | `market_state` | Symbol; optional date | Completed-session state, historical analogs, outcome ranges, transition memory and tape |
 | `daily_note` | Optional date | Published daily research, selection rule and settled-note tally |
 | `research_quality` | None | Published calibration receipt, dated sample and qualifications |
+| `search_research` | Query; optional kind, limit and offset | Relevant publications, IDs, findings, sample receipts, limitations and versions |
+| `read_research` | Research ID; optional section, offset and version | Overview or an exact source document, with pagination and hashes |
 
-Each tool works independently. No preliminary search or cohort handle is needed.
+Market-state requests need no preliminary search or cohort handle. For published
+research, search for an ID, then read its evidence.
 
 Example question: “Read AAPL's latest completed-session state. Report the
 historical analog ranges, sample sizes, session date and limitations.”
@@ -63,6 +66,23 @@ curl "https://chartlibrary.io/api/v1/calibration"
 
 Use only the call relevant to the question. For a historical state add
 `&date=YYYY-MM-DD`. Daily REST requests call the date parameter `session`.
+
+## Research workflow
+
+```python
+search_research(query="IONQ noon", kind="casebook")
+read_research(research_id="casebook:ionq-noon")
+read_research(research_id="casebook:ionq-noon", section="article")
+```
+
+The overview lists available sections. Pass its version on later reads and follow
+next_offset until null. Keyword search ranks document relevance, not market similarity
+or evidence strength. A partial result means a publication source was unavailable.
+Withdrawn articles cannot be read. Publication dates and market cutoffs differ; the
+noon IONQ case must not be merged with completed-session state analogs.
+
+[Complete IONQ example](https://chartlibrary.io/developers/research-example) ·
+[Agent research plan](https://chartlibrary.io/research/agents)
 
 ## Read the evidence accurately
 

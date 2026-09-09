@@ -17,9 +17,9 @@ def test_package_is_anonymous_http_by_default():
     assert not mcp_server._API_KEY
 
 
-def test_public_menu_has_three_tools():
+def test_public_menu_has_five_tools():
     names = [t.name for t in asyncio.run(mcp_server._list_visible_tools())]
-    assert names == ["market_state", "daily_note", "research_quality"]
+    assert names == ["market_state", "daily_note", "research_quality", "search_research", "read_research"]
 
 
 def test_legacy_names_stay_registered():
@@ -55,7 +55,7 @@ def test_release_surfaces_have_matching_versions_and_public_tools():
     assert registry["remotes"] == [{"type": "streamable-http", "url": "https://chartlibrary.io/mcp"}]
     assert all(package["version"] == version for package in registry["packages"])
     assert re.search(r'^version: (.+)$', smithery, re.M).group(1) == version
-    assert re.findall(r'^  - name: (.+)$', smithery, re.M) == ["market_state", "daily_note", "research_quality"]
+    assert re.findall(r'^  - name: (.+)$', smithery, re.M) == ["market_state", "daily_note", "research_quality", "search_research", "read_research"]
     requirements = (root / "requirements.txt").read_text().splitlines()
     assert "mcp>=1.28.1,<2.0.0" in requirements
     assert "python-dotenv>=1.0.0" in requirements

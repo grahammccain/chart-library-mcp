@@ -2,12 +2,12 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.grahammccain/chart-library",
   "title": "Chart Library — Market-state research",
-  "description": "Free market-state research: historical analogs, daily notes and calibration evidence.",
+  "description": "Market memory for AI: historical states, published studies and source evidence.",
   "repository": {
     "url": "https://github.com/grahammccain/chart-library-mcp",
     "source": "github"
   },
-  "version": "6.2.0",
+  "version": "6.3.0",
   "remotes": [
     {
       "type": "streamable-http",
@@ -18,7 +18,7 @@
     {
       "registryType": "pypi",
       "identifier": "chartlibrary-mcp",
-      "version": "6.2.0",
+      "version": "6.3.0",
       "transport": {
         "type": "stdio"
       },

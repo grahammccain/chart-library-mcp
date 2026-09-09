@@ -45,12 +45,14 @@ async def run():
                 initialized = await session.initialize()
                 listed = await session.list_tools()
                 names = [t.name for t in listed.tools]
-                assert names == ["market_state", "daily_note", "research_quality"], names
+                assert names == ["market_state", "daily_note", "research_quality", "search_research", "read_research"], names
                 for name, arguments in [
                     ("market_state", {"symbol": "aapl", "date": "2026-09-04"}),
                     ("daily_note", {}),
                     ("research_quality", {}),
                     ("state_packet", {"symbol": "AAPL", "lane": "gap"}),
+                    ("search_research", {"query": "IONQ & missing"}),
+                    ("read_research", {"research_id": "casebook:ionq-noon", "section": "article"}),
                 ]:
                     before = len(seen)
                     result = await session.call_tool(name, arguments)
@@ -63,6 +65,8 @@ async def run():
                 assert seen[1]["path"] == "/api/v1/daily"
                 assert seen[2]["path"] == "/api/v1/calibration"
                 assert "lane=gap" in seen[3]["path"]
+                assert seen[4]["path"].startswith("/api/v1/research/search?query=IONQ+%26+missing")
+                assert seen[5]["path"].startswith("/api/v1/research/read?research_id=casebook%3Aionq-noon")
                 print(json.dumps({
                     "package": importlib.metadata.version("chartlibrary-mcp"),
                     "sdk": importlib.metadata.version("mcp"),

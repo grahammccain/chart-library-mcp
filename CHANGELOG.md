@@ -1,3 +1,7 @@
+# 6.3.0 — Published research memory
+
+Adds search_research and read_research: public findings, dates, samples, limitations, source documents and versioned reads. Hosted and installed clients share five tools. Legacy dispatch remains available.
+
 # Changelog
 
 ## 6.2.0 — 2026-09-07
