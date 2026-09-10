@@ -1,6 +1,6 @@
-"""Chart Library MCP: three public research tools, with legacy calls preserved.
+"""Chart Library MCP: five public research tools, with legacy calls preserved.
 
-Public menu: market_state, daily_note, research_quality.
+Public menu: market_state, daily_note, research_quality, search_research, read_research.
 Use CHART_LIBRARY_MCP_PROFILE=advanced only for an existing integration that
 needs the extended menu. Old names remain registered in either profile.
 
@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-from mcp.types import ToolAnnotations
+from mcp.types import CallToolResult, ToolAnnotations
 from public_research import (
     MCP_INSTRUCTIONS, PUBLIC_TOOLS, validate_session, validate_symbol,
 )
@@ -1355,13 +1355,74 @@ async def state_packet(symbol: str, date: str | None = None, lane: str = "v1") -
         return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [str(e)]}})
 
 
+# Only documented public validation text may cross the MCP boundary. Unknown
+# API bodies and arbitrary exception details remain server-side.
+_PUBLIC_VALIDATION_MESSAGES = frozenset({
+    "symbol must be a stock ticker, for example AAPL or BRK.B",
+    "date must be a completed session in YYYY-MM-DD format",
+    "date must be a valid calendar date in YYYY-MM-DD format",
+    "query must contain at most 200 characters",
+    "Use kind all, study, casebook or agent_protocol; limit 1-20; offset 0-10000",
+    "Use an exact research ID returned by search_research",
+    "Use an available section and an offset between 0 and 1000000",
+    "The overview is not paginated; use offset 0",
+    "version must be the 64-character hash from search or a previous read",
+    "offset is beyond this document",
+})
+_PUBLIC_ARGUMENT_NAMES = {"date"} | {
+    parameter for entry in PUBLIC_TOOLS.values() for parameter in entry["parameters"]
+}
+
+
+def _public_validation_warning(exc: Exception) -> str:
+    """Return recognized validation guidance without arbitrary exception/body text."""
+    detail = str(exc) if isinstance(exc, ValueError) else getattr(exc, "detail", None)
+    response = getattr(exc, "response", None)
+    if response is not None:
+        try:
+            body = response.json()
+        except (ValueError, TypeError):
+            body = None
+        if isinstance(body, dict):
+            error = body.get("error")
+            detail = error.get("message") if isinstance(error, dict) else body.get("detail")
+    if isinstance(detail, str) and detail in _PUBLIC_VALIDATION_MESSAGES:
+        return detail
+    if isinstance(detail, list):
+        # FastAPI validation may echo input, ctx or arbitrary message text.
+        # Expose only recognized field names; clients have their input schemas.
+        fields = set()
+        for item in detail[:5]:
+            location = item.get("loc", []) if isinstance(item, dict) else []
+            if isinstance(location, (list, tuple)) and location:
+                field = location[-1]
+                if isinstance(field, str) and field in _PUBLIC_ARGUMENT_NAMES:
+                    fields.add(field)
+        if fields:
+            return "Invalid value for " + ", ".join(sorted(fields)) + ". Check the documented formats and limits."
+    return "Invalid research request. Check the tool arguments and their documented limits."
+
+
 def _public_tool_error(exc: Exception) -> str:
+    status_code = getattr(exc, "status_code", None)
+    if status_code is None:
+        status_code = getattr(getattr(exc, "response", None), "status_code", None)
     if isinstance(exc, ValueError):
-        warning = str(exc)
+        warning = _public_validation_warning(exc)
+        status_code = 422
+    elif status_code in {400, 422}:
+        warning = _public_validation_warning(exc)
+    elif status_code == 404:
+        warning = "Requested research is unavailable or not published. Check the ID, date, and available sections."
+    elif status_code == 429:
+        warning = "Research service rate limit reached. Wait before trying again."
     else:
         log.exception("Public research tool failed")
         warning = "Research service unavailable. Please try again later."
-    return json.dumps({"status": "error", "data": {}, "meta": {"warnings": [warning]}})
+    meta = {"warnings": [warning]}
+    if isinstance(status_code, int):
+        meta["http_status"] = status_code
+    return json.dumps({"status": "error", "data": {}, "meta": meta})
 
 
 @mcp.tool(title="Market state", annotations=READ_ONLY)
@@ -2196,6 +2257,25 @@ async def _list_visible_tools():
 # Override FastMCP's default (list-everything) ListToolsRequest handler. Must run
 # after all @mcp.tool registrations so mcp.list_tools() sees the full set.
 mcp._mcp_server.list_tools()(_list_visible_tools)
+
+
+async def _call_tool_with_public_errors(name, arguments):
+    """Keep the public JSON/schema contract while marking failed MCP reads."""
+    result = await mcp.call_tool(name, arguments)
+    if name in PUBLIC_TOOLS and isinstance(result, tuple):
+        content, structured = result
+        try:
+            payload = json.loads(structured["result"])
+        except (KeyError, TypeError, ValueError):
+            return result
+        if isinstance(payload, dict) and payload.get("status") == "error":
+            return CallToolResult(content=list(content), structuredContent=structured, isError=True)
+    return result
+
+
+# FastMCP still validates arguments and output schemas. Only the final wire
+# envelope changes; direct Python calls and legacy tool dispatch stay intact.
+mcp._mcp_server.call_tool(validate_input=False)(_call_tool_with_public_errors)
 
 
 # ── Entry point ──────────────────────────────────────────────

@@ -7,7 +7,7 @@
     "url": "https://github.com/grahammccain/chart-library-mcp",
     "source": "github"
   },
-  "version": "6.3.2",
+  "version": "6.3.3",
   "remotes": [
     {
       "type": "streamable-http",
@@ -18,7 +18,7 @@
     {
       "registryType": "pypi",
       "identifier": "chartlibrary-mcp",
-      "version": "6.3.2",
+      "version": "6.3.3",
       "transport": {
         "type": "stdio"
       },
