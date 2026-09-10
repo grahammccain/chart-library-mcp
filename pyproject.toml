@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chartlibrary-mcp"
-version = "6.3.0"
+version = "6.3.1"
 description = "Free market-state research through five read-only tools: market_state, daily_note, research_quality, search_research and read_research. Historical analogs, published research, and calibration evidence; no API key needed to try."
 readme = "README.md"
 requires-python = ">=3.10"

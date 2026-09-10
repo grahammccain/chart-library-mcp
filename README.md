@@ -3,7 +3,7 @@
 
 Market memory for AI, with published research for agents and people.
 
-Version 6.3.0 adds published-research search and source-document reading to the hosted
+Version 6.3.1 adds published-research search and source-document reading to the hosted
 service and installed client. Existing integrations retain their callable tool names.
 
 ## Five read-only tools

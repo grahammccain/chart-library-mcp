@@ -1,3 +1,7 @@
+# 6.3.1 — Clarify the transition sample
+
+Transition memory includes comparable state changes across stocks. Preserve its symbol count and time span; it is not limited to the queried stock.
+
 # 6.3.0 — Published research memory
 
 Adds search_research and read_research: public findings, dates, samples, limitations, source documents and versioned reads. Hosted and installed clients share five tools. Legacy dispatch remains available.

@@ -1329,7 +1329,7 @@ async def state_packet(symbol: str, date: str | None = None, lane: str = "v1") -
 
     data = the production happening-then-shape analog set of the state (n, symbols, sessions, closest members),
     its informative receipt (5d and 1d), what followed (1/5/10 d date-matched excess p10/p50/p90 and up-rate);
-    transition_memory = every prior liquid instance of the name's own slow4 -> slow4 move (5 d excess p10/p50/p90,
+    transition_memory = prior liquid instances across stocks of the same slow4 -> slow4 move (5 d excess p10/p50/p90,
     up-rate); tape (rvol, gap, intraday, close position, returns, MA200, 52w-high distance, overhead, peers, dollar
     volume, cap, sector). lane="gap" adds event: gap_pct/sign, earnings_session, width_1d/5d/10d (the analog band
     widened by the registered gap-day conditioner -- the honest range on a gap day), same_situation_share.

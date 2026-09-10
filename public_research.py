@@ -12,8 +12,8 @@ PUBLIC_TOOLS = {
         "description": (
             "Supply a stock symbol and optionally a completed session (YYYY-MM-DD). "
             "Omit date for the latest built session, not a real-time quote. Returns the "
-            "state, tape, historical analog sample, outcome ranges, and the name's prior "
-            "state transitions in one call. Preserve status, sample sizes, dates, and "
+            "state, tape, historical analog sample, outcome ranges, and comparable historical "
+            "state transitions across stocks in one call. Preserve status, sample sizes, dates, and "
             "informative receipts. Excess-return ranges are empirical observations in "
             "percentage points relative to a date-matched liquid-stock baseline; they "
             "are not automatically calibrated forecasts. Empty or weak evidence is not "
