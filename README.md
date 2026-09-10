@@ -3,9 +3,9 @@
 
 Market memory for AI, with published research for agents and people.
 
-Version 6.3.2 (unreleased) prepares version-pinned source reading and clear recovery
+Version 6.3.2 adds version-pinned source reading and clear recovery
 when a publication changes. Existing integrations retain their callable tool names.
-The matching server metadata and guides are prepared in Chart Library PR #178.
+Use each document's supplied read arguments to retain its full publication version.
 
 ## Five read-only tools
 

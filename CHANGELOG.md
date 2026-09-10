@@ -1,4 +1,4 @@
-# 6.3.2 (unreleased) — Version-pinned research reads
+# 6.3.2 (2026-09-10) — Version-pinned research reads
 
 Sync mcp_server.py and public_research.py with Chart Library commit 88ca39eb.
 Use supplied read arguments and full publication hashes. Preserve source-version
@@ -6,8 +6,8 @@ conflicts with instructions to restart from the current overview, without automa
 retries or raw server-error disclosure. Update the source-reading and limitation
 guidance. The five public tool names and optional version argument remain compatible.
 
-Prepared with https://github.com/grahammccain/chart-library/pull/178.
-No package, registry entry or desktop bundle has been published for this candidate.
+Server release: https://github.com/grahammccain/chart-library/pull/178.
+PyPI and official MCP registry release; desktop bundle packaging is separate.
 
 # 6.3.1 — Clarify the transition sample
 
