@@ -1,6 +1,6 @@
 # Chart Library MCP: the same five-tool public menu as the hosted service.
 name: chart-library
-version: 6.3.1
+version: 6.3.2
 description: >
   Free market-state research through five read-only tools:
   market_state, daily_note, research_quality, search_research and read_research. Read completed-session
