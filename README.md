@@ -3,8 +3,9 @@
 
 Market memory for AI, with published research for agents and people.
 
-Version 6.3.1 adds published-research search and source-document reading to the hosted
-service and installed client. Existing integrations retain their callable tool names.
+Version 6.3.2 adds version-pinned source reading and clear recovery
+when a publication changes. Existing integrations retain their callable tool names.
+Use each document's supplied read arguments to retain its full publication version.
 
 ## Five read-only tools
 
@@ -71,13 +72,21 @@ Use only the call relevant to the question. For a historical state add
 
 ```python
 search_research(query="IONQ noon", kind="casebook")
-read_research(research_id="casebook:ionq-noon")
-read_research(research_id="casebook:ionq-noon", section="article")
+read_research(research_id="casebook:ionq-noon", section="article",
+              version="FULL_VERSION_FROM_SEARCH")
 ```
 
-The overview lists available sections. Pass its version on later reads and follow
-next_offset until null. Keyword search ranks document relevance, not market similarity
-or evidence strength. A partial result means a publication source was unavailable.
+Replace FULL_VERSION_FROM_SEARCH with the full 64-character version from the chosen
+search result. Updated servers supply documents[section].read_arguments directly;
+copy those into the tool and follow content.next_read until null. With earlier
+servers, pass the returned version and next_offset explicitly. Omitting the optional
+version reads the current publication without checking it against earlier responses.
+A changed version returns an error explaining how to restart from the current
+overview; the client does not retry automatically.
+
+Search summaries are discovery metadata, not a source read. Read available guides
+and relevant limiting findings before making claims. Keyword search ranks document
+relevance, not market similarity or evidence strength. A partial result means a publication source was unavailable.
 Withdrawn articles cannot be read. Publication dates and market cutoffs differ; the
 noon IONQ case must not be merged with completed-session state analogs.
 

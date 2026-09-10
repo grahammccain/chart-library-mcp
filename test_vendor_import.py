@@ -59,3 +59,29 @@ def test_release_surfaces_have_matching_versions_and_public_tools():
     requirements = (root / "requirements.txt").read_text().splitlines()
     assert "mcp>=1.28.1,<2.0.0" in requirements
     assert "python-dotenv>=1.0.0" in requirements
+
+
+def test_research_version_conflict_preserves_recovery_without_retry(monkeypatch):
+    from requests import HTTPError, Response
+    response = Response()
+    response.status_code = 409
+    read = Mock(side_effect=HTTPError("private-server-detail", response=response))
+    monkeypatch.setattr(mcp_server, "_http_get", read)
+    result = json.loads(asyncio.run(mcp_server.read_research("study:100", section="result", version="a" * 64)))
+    assert result["status"] == "error"
+    assert result["meta"]["http_status"] == 409
+    assert "section=overview" in result["meta"]["warnings"][0]
+    assert "without the old version" in result["meta"]["warnings"][0]
+    assert "private-server-detail" not in json.dumps(result)
+    assert read.call_count == 1
+
+
+def test_read_forwards_full_version_and_retains_next_read(monkeypatch):
+    args = {"research_id": "study:100", "section": "result", "offset": 24000, "version": "b" * 64}
+    payload = {"status": "ok", "research": {"version": "b" * 64, "content": {"next_read": args}}}
+    read = Mock(return_value=payload)
+    monkeypatch.setattr(mcp_server, "_http_get", read)
+    result = json.loads(asyncio.run(mcp_server.read_research("study:100", section="result", version="b" * 64)))
+    assert result == payload
+    assert read.call_count == 1
+    assert read.call_args.args[0].endswith("&version=" + "b" * 64)

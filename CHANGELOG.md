@@ -1,3 +1,14 @@
+# 6.3.2 (2026-09-10) — Version-pinned research reads
+
+Sync mcp_server.py and public_research.py with Chart Library commit 88ca39eb.
+Use supplied read arguments and full publication hashes. Preserve source-version
+conflicts with instructions to restart from the current overview, without automatic
+retries or raw server-error disclosure. Update the source-reading and limitation
+guidance. The five public tool names and optional version argument remain compatible.
+
+Server release: https://github.com/grahammccain/chart-library/pull/178.
+PyPI and official MCP registry release; desktop bundle packaging is separate.
+
 # 6.3.1 — Clarify the transition sample
 
 Transition memory includes comparable state changes across stocks. Preserve its symbol count and time span; it is not limited to the queried stock.
