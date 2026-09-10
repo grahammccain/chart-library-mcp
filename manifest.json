@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "chart-library",
   "display_name": "Chart Library",
-  "version": "6.3.2",
+  "version": "6.3.3",
   "description": "Free market-state research through five read-only tools: market_state, daily_note, research_quality, search_research and read_research.",
   "long_description": "Read completed-session market states and historical analogs, find relevant published studies, and retrieve their findings, dates, sample receipts, limitations and exact source documents. Daily notes and calibration have their own tools. No API key is required. Preserve source versions and unknowns. Proposed agent protocols are not results. Existing advanced tool names remain callable.",
   "author": {

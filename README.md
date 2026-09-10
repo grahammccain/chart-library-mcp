@@ -3,9 +3,10 @@
 
 Market memory for AI, with published research for agents and people.
 
-Version 6.3.2 adds version-pinned source reading and clear recovery
-when a publication changes. Existing integrations retain their callable tool names.
-Use each document's supplied read arguments to retain its full publication version.
+Version 6.3.3 marks failed public tool calls as MCP errors while preserving their
+structured recovery details. Invalid requests explain how to correct the inputs;
+stale publication versions retain instructions to restart from the current overview.
+Successful response schemas and direct Python calls remain compatible.
 
 ## Five read-only tools
 

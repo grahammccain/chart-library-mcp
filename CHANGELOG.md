@@ -1,3 +1,20 @@
+# 6.3.3 (2026-09-10) — Actionable public MCP errors
+
+Mark failed public calls with MCP `isError: true` while preserving the existing
+JSON recovery payload and successful output schemas. Invalid requests retain safe
+validation guidance and HTTP status; unknown error details stay private. Stale
+publication versions still explain how to restart without combining revisions.
+
+Anonymous access, direct Python string returns, five public tool names and legacy
+dispatch remain compatible. Add real MCP protocol regression coverage without
+requiring FastAPI or application server packages in the installed client.
+
+Sync `mcp_server.py` and `public_research.py` with Chart Library commit
+`33996750a2f10d8b8d8a65544aeeea2af68f60b2` ([PR #179](https://github.com/grahammccain/chart-library/pull/179)).
+SDK compatibility was checked at the supported minimum 1.28.1 and production
+version 1.29.1. PyPI/registry publication and desktop bundle packaging are separate
+release steps.
+
 # 6.3.2 (2026-09-10) — Version-pinned research reads
 
 Sync mcp_server.py and public_research.py with Chart Library commit 88ca39eb.
